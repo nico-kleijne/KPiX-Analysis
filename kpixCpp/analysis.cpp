@@ -146,8 +146,7 @@
 	ofstream               csv;
 	uint                   acquisitionCount;
 	string                 outRoot;
-	string                 outXml;
-	string                 outCsv;
+
 	TFile                  *rFile;
 	TCanvas                *c1;
 	stringstream           crossString;
@@ -258,11 +257,6 @@
 	tmp << argv[1] << ".root";
 	outRoot = tmp.str();
 	tmp.str("");
-	tmp << argv[1] << ".xml";
-	outXml = tmp.str();
-	tmp.str("");
-	tmp << argv[1] << ".csv";
-	outCsv = tmp.str();
 	
 	
 	//Start of change
@@ -300,7 +294,7 @@
 	// Init
 	currPct          	= 0;
 	lastPct          	= 100;
-	eventCount       	= 0;
+	//eventCount       	= 0;
 	minChan          	= 0;
 	maxChan          	= 0;
 	badTimes         	= 0;
@@ -1141,8 +1135,6 @@
 	
 	cout << endl;
 	cout << "Writing root plots to " << outRoot << endl;
-	cout << "Writing xml data to " << outXml << endl;
-	cout << "Writing csv data to " << outCsv << endl;
 	cout << endl;
 	rFile->Write();
 	gROOT->GetListOfFiles()->Remove(rFile);
