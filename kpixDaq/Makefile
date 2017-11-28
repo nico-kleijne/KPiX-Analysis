@@ -1,5 +1,5 @@
 # Variables
-CC     := g++ -g
+CC     := g++ -g -std=c++11
 DEF    := -DMAKE_SW_VERSION=\"kpixSw_3.10\"
 BIN    := $(PWD)/bin
 OBJ    := $(PWD)/.obj
@@ -42,8 +42,10 @@ dir:
 
 # Clean
 clean:
-	rm -rf $(OBJ)
-	rm -f $(BIN)/*
+	#rm -rf $(OBJ)
+	rm ./.obj
+	#rm -f $(BIN)/*
+	rm ./bin
 	cd cntrlGui; qmake; make clean
 	cd root; make clean
 	cd python; make clean

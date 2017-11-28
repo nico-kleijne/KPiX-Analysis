@@ -101,6 +101,7 @@ void CommLink::ioHandler() {
 // Dummy RX routine
 void CommLink::rxHandler() { }
 
+
 // Data routine
 void CommLink::dataHandler() {
    Data      *dat;
@@ -169,6 +170,8 @@ void CommLink::dataHandler() {
 		buffer = new char[chunkSize];
 
 		memcpy(buffer, source + sendPos, chunkSize);
+		//write(1, buffer, chunkSize);
+		//write(1, "\n==\n", 1);
 
 		chunkSize = sendto(dataNetFd_, buffer, chunkSize, 0, (const sockaddr*)&net_addr_, slen);
 		messageLength -= chunkSize;
@@ -194,7 +197,7 @@ void CommLink::dataHandler() {
             // Data file is open
             else if ( dataFileFd_ >= 0 ) {
 	      // cout<<"[CommLink:dev] dataHandler() says 'data file is open and now is writing to it!' ==> file:\n    "<< dataFileFd_<<endl;
-
+	      
                write(dataFileFd_,&xmlSize,4);
                write(dataFileFd_,xmlReqEntry_.c_str(),wrSize);
             }
@@ -208,6 +211,15 @@ void CommLink::dataHandler() {
       if ( (dat = (Data *)dataQueue_.pop()) != NULL ) {
          size = dat->size();
          buff = dat->data();
+
+	 /*Nov22 wMq*/
+	 if (eudaqPush_){
+	   Data *dat_toread = new Data( buff, size);
+	   std::unique_lock<std::mutex> mylock(eudaqQueue_guard);
+	   eudaqQueue_.push(dat_toread);
+	   mylock.unlock();
+	 }
+	 /*Nov22 wMq*/
 
          // Callback function is set
          if ( dataCb_ != NULL ) dataCb_(buff, size);
@@ -297,23 +309,37 @@ void CommLink::dataHandler() {
    }
 }
 
+Data* CommLink::pollEudaqQueue(){
+  std::unique_lock<std::mutex> eulock(eudaqQueue_guard);
+  if (eudaqQueue_.empty()) return NULL;
+  else {
+    cout << "[commlink] eudaq queue size is"<< eudaqQueue_.size()<<endl;
+    auto toreturn = eudaqQueue_.front();
+    eudaqQueue_.pop();
+    eulock.unlock();
+    return toreturn;
+  }
+  /* REMINDER: always delete this pointer after get it by calling this function!*/
+}
+
 //! Function for polling the queue when the RX Thread is disabled
 Data* CommLink::pollDataQueue(uint32_t wait) {
    Data *dat;   
-   cout<< "[CommLink] I am testing @_@" <<endl;//wmq
+   //cout<< "[CommLink] I am testing @_@" <<endl;//wmq
    // Check if RxThread is disabled
-   //if(!enDataThread_){
-      // Get the data from the queue
+   if(!enDataThread_){
+     // Get the data from the queue
       dat = (Data *)dataQueue_.pop(wait);
-      if (dat==NULL) cout<<"CommLink->pollDataHandler(): empty Data from buffer ==> CHECK! TAT" <<endl;
-      //} else {
-      //cout << "CommLink->pollDataHandler(): No operation because RxThread is enabled" << endl;
-      //}
+      //if (dat==NULL) cout<<"CommLink->pollDataHandler(): empty Data from buffer ==> CHECK! TAT" <<endl;
+   } else {
+     cout << "CommLink->pollDataHandler(): No operation because RxThread is enabled" << endl;
+   }
    return dat;
 }
 
 // Constructor
 CommLink::CommLink ( ) {
+  eudaqPush_ = false;
    debug_           = false;
    dataSource_      = 0;
    dataFileFd_      = -1;
@@ -566,12 +592,11 @@ void CommLink::openDataNet (string address, int32_t port) {
    bool wmqTest=true;
    if (wmqTest){
      int testmsg=0;
-     char buf[1024];
      unsigned int fromlen = sizeof(struct sockaddr_in);
      
      if ( bind(dataNetFd_, (struct sockaddr *)&net_addr_, sizeof(struct sockaddr_in))<0 )
        perror("binding");
-     
+
      if (dataNetFd_>=0){
        puts("\n\tStart to send...\n");
        while(1){
@@ -598,13 +623,18 @@ void CommLink::openDataNet (string address, int32_t port) {
 
 // Close data file
 void CommLink::closeDataNet () {
-   ::close(dataNetFd_);
-   dataNetFd_  = -1;
-
-   if ( debug_ ) {
-      cout << "CommLink::closeData -> "
-           << "Closed data network " << dataNetAddress_ << endl;
-   }
+  uint32_t _closing = 0xABABABAB;
+  int32_t  fromlen = sizeof(net_addr_);
+  sendto(dataNetFd_,&_closing,4,0,(const sockaddr*)&net_addr_, fromlen);
+  
+  ::close(dataNetFd_);
+  dataNetFd_  = -1;
+  cout<< "CLOSING NETWORK" <<endl;
+   
+  if ( debug_ ) {
+    cout << "CommLink::closeData -> "
+	 << "Closed data network " << dataNetAddress_ << endl;
+  }
 }
 
 //! Set data callback function
