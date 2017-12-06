@@ -2,8 +2,8 @@
 
 Desciption: analysis code for R&D use on the LYCORIS telescope project.
 
---------------
 ### Prerequisite:
+--------------
 
 In order to run this package, you will need:
 * libkpix.so produced from the kpix DAQ: https://github.com/Lycoris2017/KPiX-Lycoris.git
@@ -13,8 +13,8 @@ mkdir lib
 cp $KPIX-DAQ/libkpix.so lib/
 ```
 
---------------
 ### Basic setup:
+--------------
 
 #### Add the central KPiX-Daq repository to get the master branch:
 
