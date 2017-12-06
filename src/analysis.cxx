@@ -1,6 +1,6 @@
 	//-----------------------------------------------------------------------------
 	// File          : analysis.cpp
-	// Author        : Uwe Krämer (orig. Ryan Herbst) <uwe.kraemer@desy.de>
+	// Author        : Uwe Kraemer (orig. Ryan Herbst) <uwe.kraemer@desy.de>
 	// Created       : 06/28/2017
 	// Project       : KPiX Analysis
 	//-----------------------------------------------------------------------------
@@ -14,36 +14,37 @@
 	// 05/30/2012: created
 	// 06/28/2017: large scale rewrite of original calibrationFitter.cpp
 	//-----------------------------------------------------------------------------
-	#include <iostream>
-	#include <iomanip>
-	#include <TFile.h>
-	#include <TH1F.h>
-	#include <TH2F.h>
-	#include <TF1.h>
-	#include <TTree.h>
-	#include <TROOT.h>
-	#include "/afs/desy.de/user/k/kraemeru/public/map.cpp"
-	#include <TPolyLine3D.h>
-	#include <TCanvas.h>
-	#include <TMultiGraph.h>
-	#include <TApplication.h>
-	#include <TGraphErrors.h>
-	#include <TGraph.h>
-	#include <TStyle.h>
-	#include <TVector.h>
-	#include <TKey.h>
-	#include <TClass.h>
-	#include <stdarg.h>
-	#include <KpixEvent.h>
-	#include <KpixSample.h>
-	#include <Data.h>
-	#include <DataRead.h>
-	#include <math.h>
-	#include <fstream>
-	#include <XmlVariables.h>
-	#include <string.h>
-	
-	using namespace std;
+#include <iostream>
+#include <iomanip>
+#include <TFile.h>
+#include <TH1F.h>
+#include <TH2F.h>
+#include <TF1.h>
+#include <TTree.h>
+#include <TROOT.h>
+//#include "/afs/desy.de/user/k/kraemeru/public/map.cpp"
+#include <TPolyLine3D.h>
+#include <TCanvas.h>
+#include <TMultiGraph.h>
+#include <TApplication.h>
+#include <TGraphErrors.h>
+#include <TGraph.h>
+#include <TStyle.h>
+#include <TVector.h>
+#include <TKey.h>
+#include <TClass.h>
+#include <stdarg.h>
+#include <KpixEvent.h>
+#include <KpixSample.h>
+#include <Data.h>
+#include <DataRead.h>
+#include <math.h>
+#include <fstream>
+#include <XmlVariables.h>
+#include <string.h>
+
+#include "kpixmap.h"
+using namespace std;
 	
 	
 	

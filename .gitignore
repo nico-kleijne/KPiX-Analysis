@@ -1,0 +1,7 @@
+*.bin
+*~
+*.save*
+*.so
+*.o
+bin/
+ChangeLog
