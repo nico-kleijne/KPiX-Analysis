@@ -21,14 +21,18 @@ BIN=$(PWD)/bin
 objects=$(patsubst $(SRC)/%.cxx,$(BIN)/%,$(wildcard $(SRC)/*.cxx))
 
 #default:
-all: $(objects)
-ana: analysis
+all: dir $(objects)
+ana: dir analysis
 
 $(BIN)/%: $(SRC)/%.cxx
 	$(CC) -o $@ $< $(CFLAGS) $(KP_RLIB) $(LFLAGS)
 
 analysis: $(SRC)/analysis.cxx
 	$(CC) -o $(BIN)/analysis $(SRC)/analysis.cxx $(CFLAGS) $(KP_RLIB) $(LFLAGS) 
+
+# executable directory
+dir:
+	test -d $(BIN) || mkdir $(BIN)
 
 clean:
 	rm $(BIN)/*
