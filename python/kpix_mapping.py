@@ -139,8 +139,10 @@ row = []
 ymax = 0
 ymin = -6
 
-file_map_kpix_to_sensor = '/afs/desy.de/user/k/kraemeru/public/gui_sort.txt'
-file_map_sensor_to_kpix = '/afs/desy.de/user/k/kraemeru/public/gui_hama.txt'
+#file_map_kpix_to_sensor = '/afs/desy.de/user/k/kraemeru/public/gui_sort.txt'
+#file_map_sensor_to_kpix = '/afs/desy.de/user/k/kraemeru/public/gui_hama.txt'
+file_map_kpix_to_sensor = 'gui_sort.txt'
+file_map_sensor_to_kpix = 'gui_hama.txt'
 
 bad = []
 noise = []
