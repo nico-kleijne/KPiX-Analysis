@@ -372,7 +372,7 @@ TH1F *k30_y = new TH1F ("k30_y", "k30_y; y30/row_width; #entries/#acq.cycles",40
 
 TH1F *ExtTrigPerCycle = new TH1F ("external_triggers_per_cycle", "ext_trig_per_acq.; #ext_triggers_per_acq.cycle; #entries/#acq.cycles",100,0.5,99.5);
 
-TH1F *three_coincidence_channel_entries= new TH1F("three_coincidence_channel_entries", "three_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
+//TH1F *three_coincidence_channel_entries= new TH1F("three_coincidence_channel_entries", "three_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 TH1F *full_coincidence_channel_entries= new TH1F("full_coincidence_channel_entries", "full_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 Folder1.str("");
 Folder1 << "Events";
@@ -775,7 +775,7 @@ while ( dataRead.next(&event) )
 				adc_value[kpix].push_back(value);
 				time_kpix->Fill(tstamp, weight);
 
-				double  trig_diff_list[time_ext.size];
+				double  trig_diff_list[time_ext.size()];
 
 				hist[kpix][channel][bucket][0]->Fill(value, weight);
 				//hist_charge[kpix][channel][bucket][0]->Fill(double(value)/calib_slope[channel]*pow(10,15) , weight);
@@ -877,7 +877,7 @@ while ( dataRead.next(&event) )
 							//cout << "[DEBUG] T_EXT " << time_ext.at(j) << endl;
 							//cout << "[DEBUG] DIFF " << trig_diff << endl;
 					}
-					else:
+					else
 					{
 						cout << "Difference not lower than before" << endl;
 						cout << "Channel time stamp = " << tstamp << endl;
@@ -889,7 +889,7 @@ while ( dataRead.next(&event) )
 					
 				}
 				cout << "Trig diff old method = " <<  trig_diff << endl;
-				cout << "Trig diff new method = " << std::min_element(0, time_ext.size()) << endl; //experimental
+				//cout << "Trig diff new method = " << std::min_element(0, time_ext.size()) << endl; //experimental -> min_element is for an array, if you want to compare time_ext.size()<0 or not, use std::min
 
 				time_diff_kpix_ext[kpix].push_back(trig_diff);
 				//cout << assigned_number << endl;
@@ -1062,8 +1062,8 @@ while ( dataRead.next(&event) )
 	//////////////////////////////////////////
 	std::vector<int> kpix_matched_time;
 	std::vector<int> kpix_matched_channel;
-	int map_range = 1.0;
-	int time_range = 0;
+	//int map_range = 1.0;
+	//int time_range = 0;
 	//for (int j = 0; j < adc_value[26].size(); ++j)
 	//{
 		//for (int i = 0; i < adc_value[28].size(); ++i)
@@ -1077,9 +1077,9 @@ while ( dataRead.next(&event) )
 			//}
 		//}
 	//}
-	double x_0;
-	double y_0;
-	double dist_r;
+	//double x_0;
+	//double y_0;
+	//double dist_r;
 	//for (unsigned int j = 0; j < adc_value[26].size(); ++j)
 	//{
 		//x_0 = pixel_kpix[channel_hits[26].at(j)].x;
