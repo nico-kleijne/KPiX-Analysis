@@ -889,7 +889,8 @@ while ( dataRead.next(&event) )
 					
 				}
 				cout << "Trig diff old method = " <<  trig_diff << endl;
-				//cout << "Trig diff new method = " << std::min_element(0, time_ext.size()) << endl; //experimental -> min_element is for an array, if you want to compare time_ext.size()<0 or not, use std::min
+				auto new_trig_diff = std::min_element(std::begin(time_ext), std::end(time_ext));
+				cout << "Trig diff new method = " << *new_trig_diff << endl; //experimental -> min_element is for an array, if you want to compare time_ext.size()<0 or not, use std::min
 
 				time_diff_kpix_ext[kpix].push_back(trig_diff);
 				//cout << assigned_number << endl;
