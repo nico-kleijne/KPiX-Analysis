@@ -1,58 +1,95 @@
+/* Code to compare calibration files
+ * by Uwe.Kraemer@desy.de && Mengqing.Wu@desy.de
+ * requiring files to compare: 
+ *  - same root file structure: same histo names etc
+ */
+
 #include <iostream>
 #include <iomanip>
-#include <TFile.h>
-#include <TH1F.h>
-#include <TH2F.h>
-#include <TCanvas.h>
-#include <TMultiGraph.h>
-#include <TApplication.h>
-#include <TGraphErrors.h>
-#include <TGraph.h>
-#include <TStyle.h>
-#include <THStack.h>
-#include <Data.h>
-#include <DataRead.h>
 #include <math.h>
 #include <fstream>
-#include <TKey.h>
-#include <TClass.h>
-#include <string.h>
+#include <string>
+#include <sstream>
+
+#include "TFile.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TCanvas.h"
+#include "TMultiGraph.h"
+#include "TApplication.h"
+#include "TGraphErrors.h"
+#include "TGraph.h"
+#include "TStyle.h"
+#include "THStack.h"
+#include "TKey.h"
+#include "TClass.h"
+
+#include "Data.h"
+#include "DataRead.h"
+
+using namespace std;
+
+string trim(const string& str){
+  /* 
+   * simiple trimming to erase whitespaces at begin/end of a string; 
+   */
+  auto first = str.find_first_not_of(' ');
+  if (string::npos == first)
+    return str;
+  
+  size_t last = str.find_last_not_of(' ');
+  return str.substr(first, (last - first + 1));
+}
 
 int main ( int argc, char **argv ) {
 	
-	if (argc < 3) {
-		cout << "Please add a pedestal file (argument 1) and a measurement file (argument 2)" << endl;
-		return(1);
+	if (argc < 2) {
+	  cout << "Wrong arguments: \n"
+	       << " [Usage]: ./calib_compare conf.txt [optional]"<< endl;
+	  return 0;
 	}	
+	//-- String replacement for output name
+	//-- start mengqing
+	ifstream confFile;
+	confFile.open(argv[1], std::ifstream::in);
+	if (confFile.fail()) {
+	  cout<<"Unable to open the parameter files, please check: "<<argv[1]<<endl;
+	  exit(1);
+	}
+	// check how many files to compare by counting how many lines in confFile::
+	std::vector<string> infilenames;
+	std::vector<string> inlegends;
+	string infilename, inlegend;
 	
-	// String replacement for output name
+	int nlines=0;
+	std::string line;
+	while(getline(confFile, line)) {
+	  if (!confFile.good()) break;
+	  line = trim(line);
+
+	  if (line.empty()||line[0]=='#') continue;	  
+	  stringstream ss(line);
+	  ss >> infilename >>inlegend;
+
+	  infilenames.push_back(infilename);
+	  inlegends.push_back(inlegend);
+	  nlines++;
+	}
+
+	TFile* inrootf[nlines];
+	for (int i=0; i<nlines; i++){
+	  //cout<< i<<" "<<infilenames[i]<<endl;
+	  inrootf[i] = TFile::Open(infilenames[i].c_str());
+	}
 	
-	//cout << "TEST" << endl;
-	std::string output_name = argv[2];
-	std::string output_name2 = argv[1]; 
-	cout <<  output_name << endl;
-	size_t position = output_name.find("calib/") + 6; 
-	size_t position2 = output_name2.find("calib/") + 6; 
-	output_name.replace(0,position,"");
-	output_name2.replace(0,position2,"");
-	cout <<  output_name << endl;
-	cout <<  output_name2 << endl;
-	position = output_name.find(".bin.root");
-	position2 = output_name2.find(".bin.root");
-	size_t end_of_string = output_name.size();
-	size_t end_of_string2 = output_name2.size();
-	output_name2.replace(position2, end_of_string2, "");
-	output_name.replace(position, end_of_string, "");
-	cout <<  output_name << endl;
-	cout <<  output_name2 << endl;
-	std::string output_name_final = output_name + "_compare_" + output_name2 + ".bin.root";
-	std::string output_file = "/afs/desy.de/user/k/kraemeru/kpix_daq/data/" + output_name_final ;
-	const char* output_file_char = output_file.c_str();
-	cout << "Saving file to " << output_file << endl;
-	
-	TFile *f1 = TFile::Open(argv[1]);
-	TFile *f2 = TFile::Open(argv[2]);
-	TFile *hfile = new TFile(output_file_char, "RECREATE");
+	//-- end mengqing
+
+	//
+	//TFile *f1 = TFile::Open(argv[1]);
+	//TFile *f2 = TFile::Open(argv[2]);
+	auto f1 = inrootf[0];
+	auto f2 = inrootf[1];
+	TFile *hfile = new TFile("test.root", "RECREATE");
 	TIter next1(f1->GetListOfKeys());
 	
 	TKey *key1;
@@ -153,5 +190,6 @@ int main ( int argc, char **argv ) {
    f1->Close();
    f2->Close();
    hfile->Close();
-   	cout << "Saving file to " << output_file << endl;
+   cout << "Saving file to " << "test.root" << endl;
+   return 1;
 }
