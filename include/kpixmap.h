@@ -71,6 +71,38 @@ void map_sensor_to_kpix(pixel *pixel_sensor, pixel *pixel_kpix) // sensor_to_kpi
 	
 	
 }
+void map_kpix_to_strip(int *strip) // sensor_to_kpix (pixel *pixel_sensor)
+{
+	string line;
+	//cout << "DEBUG3: " << pixel_sensor[line_count].x << endl;
+	ifstream infile("/home/kraemeru/KPiX-Analysis/include/tracker_to_kpix_left.txt");
+	if (infile.good())
+	{
+		while(getline(infile,line))
+		{
+			istringstream linestream(line);
+			int col[2];
+			int count = 0;
+			while (linestream >> col[count] || !linestream.eof())
+			{
+				if (linestream.fail())
+				{
+					linestream.clear();
+					string dummy;
+					linestream >> dummy;
+					continue;
+				}
+				count++;
+			}
+			strip[col[0]] = col[1];
+		}
+	}
+	else
+	{
+			cout << "MISSING MAPPING FILE!" << endl;
+	}
+}
+
 
 // //int main()
 void pixel_mapping(pixel *pixel_ext) 
