@@ -361,7 +361,7 @@ TH1F *beam_ext_time_diff = new TH1F("beam_ext_time_diff", "beam_ext_time_diff; #
 
 TH1F *ExtTrigPerCycle = new TH1F ("external_triggers_per_cycle", "ext_trig_per_acq.; #ext_triggers_per_acq.cycle; #entries/#acq.cycles",100,0.5,99.5);
 
-TH1F *three_coincidence_channel_entries= new TH1F("three_coincidence_channel_entries", "three_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
+//TH1F *three_coincidence_channel_entries= new TH1F("three_coincidence_channel_entries", "three_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 TH1F *full_coincidence_channel_entries= new TH1F("full_coincidence_channel_entries", "full_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 Folder1.str("");
 Folder1 << "Events";
@@ -822,55 +822,50 @@ while ( dataRead.next(&event) )
 					time_diff_kpix_ext[kpix].push_back(trig_diff);
 					//cout << assigned_number << endl;
 					if (event_num < 1000)
-					{
-						AssignedChannelHist[kpix][event_num]->Fill(assigned_number);
-						trigger_difference_per_acq[kpix][event_num]->Fill(trig_diff);
-					}
+					  {
+					    AssignedChannelHist[kpix][event_num]->Fill(assigned_number);
+					    trigger_difference_per_acq[kpix][event_num]->Fill(trig_diff);
+					  }
+					
 					AssignedTrigger[kpix].push_back(assigned_number);
 					//Assignment_number.push_back(assigned_number);
 					if((trig_diff >= 0.0 )  && (trig_diff  <= 3.0) )
-					{
-	
-						
-						hist_timed[kpix][channel][bucket][0]->Fill(value, weight);
-						total_timed->Fill(value, weight);
-						channel_entries_total_timed->Fill(channel, weight);
-						channel_entries_timed[kpix][bucket]->Fill(channel, weight);
-						channel_entries_timed[kpix][4]->Fill(channel, weight);
-					}
-
-	
-	
+					  {
+					    hist_timed[kpix][channel][bucket][0]->Fill(value, weight);
+					    total_timed->Fill(value, weight);
+					    channel_entries_total_timed->Fill(channel, weight);
+					    channel_entries_timed[kpix][bucket]->Fill(channel, weight);
+					    channel_entries_timed[kpix][4]->Fill(channel, weight);
+					  }
+					
 					beam_ext_time_diff->Fill(trig_diff, weight);
 					trigger_difference[kpix]->Fill(trig_diff, weight);
 				}
 				//if (kpix != 26 && kpix != 28 && kpix != 30) cout << "Weird..." << kpix << endl;
-
-				
 			//}
-
+				
 		}
 	}
 	for (kpix = 0; kpix < 32; kpix++)
-	{
-		if (kpixFound[kpix])
-		{
-			for (uint trig = 0; trig < time_ext.size(); trig++)
-			{
-				int mycount = std::count(AssignedTrigger[kpix].begin(), AssignedTrigger[kpix].end(), trig);
-				AssignedChannelHist_Total[kpix]->Fill(mycount);
-			}
-		}
-	}
+	  {
+	    if (kpixFound[kpix])
+	      {
+		for (uint trig = 0; trig < time_ext.size(); trig++)
+		  {
+		    int mycount = std::count(AssignedTrigger[kpix].begin(), AssignedTrigger[kpix].end(), trig);
+		    AssignedChannelHist_Total[kpix]->Fill(mycount);
+		  }
+	      }
+	  }
 	//for (unsigned int k = 0; k < Assignment_number.size(); k++)
 	//{
-		//cout << "DEBUG: Assignment_Number " << k << " = " << Assignment_number.at(k) << endl;
+	//cout << "DEBUG: Assignment_Number " << k << " = " << Assignment_number.at(k) << endl;
 		//if (event_num < 1000) AssignedNumberHist[kpix][event_num]->Fill(Assignment_number.at(k));
 	//}
 	ExtTrigPerCycle->Fill(time_ext.size());
 	for (int h = 0; h<32; ++h)
-	{
-		if (kpixFound[h])
+	  {
+	    if (kpixFound[h])
 		{
 			for (int q = 0; q<4; ++q)
 			{
