@@ -171,6 +171,10 @@ ofstream				channel_file_calib;
 ofstream 				channel_file_adc_mean;
 //double 					calib_slope[1024];
 //double					calib_y0[1024];
+
+int						strip[1024];
+map_kpix_to_strip(strip);
+
 pixel					pixel_kpix[1024];
 pixel_mapping(pixel_kpix);
 
@@ -187,7 +191,10 @@ std::vector<int> monster_channels;
 
 
 
-
+for (int i = 0; i < 1000; i++)
+{
+	cout << "Strip mapping result, kpix #" << i << " is equal to strip #" << strip[i] << endl;
+}
 
 // Data file is the first and only arg
 //if ( argc != 3 && argc != 4 ) {
