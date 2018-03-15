@@ -75,7 +75,7 @@ void map_kpix_to_strip(int *strip) // sensor_to_kpix (pixel *pixel_sensor)
 {
 	string line;
 	//cout << "DEBUG3: " << pixel_sensor[line_count].x << endl;
-	ifstream infile("/home/kraemeru/KPiX-Analysis/include/tracker_to_kpix_left.txt");
+	ifstream infile("./include/tracker_to_kpix_left.txt");
 	if (infile.good())
 	{
 		while(getline(infile,line))
@@ -95,6 +95,7 @@ void map_kpix_to_strip(int *strip) // sensor_to_kpix (pixel *pixel_sensor)
 				count++;
 			}
 			strip[col[0]] = col[1];
+			if (col[1] == 302)	cout << col[0] << "      " << col[1] << endl;
 		}
 	}
 	else
