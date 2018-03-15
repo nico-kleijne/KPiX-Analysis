@@ -5,3 +5,5 @@
 *.o
 bin/
 ChangeLog
+.cproject
+.project

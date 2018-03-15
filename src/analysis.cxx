@@ -124,7 +124,9 @@ TH1F					*hist_timed[32][1024][4][2]; //  #entries/time_of_event per channel, bu
 //TH1F					*hist_charge[32][1024][4][2]; //  #entries/charge in coulomb if calibration file was given per channel, bucket, kpix and histogram
 TH1F					*channel_time[32][1024][4][2];
 TH1F					*channel_entries[32][5]; // ADC distribution Total number of events differed per bucket and kpix
+TH1F					*strip_entries[32][5];
 TH1F					*channel_entries_timed[32][5]; // Time distribution Total number of events differed per bucket and kpix
+TH1F					*channel_entries_no_strip[32][5];
 TH1F					*kpix_x_ecal[32];
 TH1F					*kpix_y_ecal[32];
 TH1F					*trigger_difference[32];
@@ -456,6 +458,14 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 		tmp << "Channel_entries_k_" << kpix << "_total_timed";
 		channel_entries_timed[kpix][4] = new TH1F(tmp.str().c_str(), "Channel_Entries_timed; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
 		tmp.str("");
+		tmp << "Channel_entries_k_" << kpix << "_total_no_strip";
+		channel_entries_no_strip[kpix][4] = new TH1F(tmp.str().c_str(), "Channel_Entries_no_strip; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
+		tmp.str("");
+		tmp << "Strip_entries_k_" << kpix << "_total";
+		strip_entries[kpix][4] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 928,-0.5, 927.5);
+
+
+		tmp.str("");
 		tmp << "timestamp_kpix_k_" << kpix  << "_total";
 		times_kpix[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
 		tmp.str("");
@@ -494,7 +504,14 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 		{
 			tmp.str("");
 			tmp << "Channel_entries_k_" << kpix << "_b" << bucket;
-			channel_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel Entries; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
+			channel_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel_Entries; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
+			tmp.str("");
+			tmp << "Channel_entries_k_" << kpix << "_b" << bucket << "_no_strip";
+			channel_entries_no_strip[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel_Entries_no_strip; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
+			tmp.str("");
+			tmp << "Strip_entries_k_" << kpix << "_b" << bucket;
+			strip_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 928,-0.5, 927.5);
+
 			tmp.str("");
 			tmp << "Channel_entries_k_" << kpix <<  "_b" << bucket << "_timed";
 			channel_entries_timed[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel_Entries_timed; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
@@ -678,9 +695,18 @@ while ( dataRead.next(&event) ) //loop through binary file event structure until
 		{
 			channel_entries[kpix][bucket]->Fill(channel, weight);
 			channel_entries[kpix][4]->Fill(channel, weight);
+
+			strip_entries[kpix][bucket]->Fill(strip[channel], weight);
+			strip_entries[kpix][4]->Fill(strip[channel], weight);
+
 			times_kpix[kpix][bucket]->Fill(tstamp, weight);
 			times_kpix[kpix][4]->Fill(tstamp, weight);
 			trigger_counter[kpix] = trigger_counter[kpix] + (1.0/num_of_channels[kpix]);
+			if (strip[channel] == 9999)
+			{
+				channel_entries_no_strip[kpix][bucket]->Fill(channel,weight);
+				channel_entries_no_strip[kpix][4]->Fill(channel,weight);
+			}
 			if (event.count() > 700)
 			{
 				times_kpix_monster[kpix][bucket]->Fill(tstamp, weight);
