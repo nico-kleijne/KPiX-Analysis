@@ -332,11 +332,11 @@ General_folder->cd(); // move into subdirectory
 // Old histogram generation (needs to be cleaned up)
 //////////////////////////////////////////
 
-TH1F *channel_entries_total= new TH1F("Channel entries_total", "Channel Entries_total; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
-TH1F *channel_entries_total_timed= new TH1F("Channel entries_total_timed", "Channel_entries_total_timed; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
+TH1F *channel_entries_total= new TH1F("Channel_entries_total", "Channel_Entries_total; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
+TH1F *channel_entries_total_timed= new TH1F("Channel_entries_total_timed", "Channel_entries_total_timed; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 
 
-TH1F *time_kpix= new TH1F("time kpix", "time kpix; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
+TH1F *time_kpix= new TH1F("time_kpix", "time_kpix; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
 TH1F *time_external= new TH1F("time external", "time external; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8192.5); // one higher because the accuracy is higher
 
 
