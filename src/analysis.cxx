@@ -191,10 +191,10 @@ std::vector<int> monster_channels;
 
 
 
-for (int i = 0; i < 1000; i++)
+/*for (int i = 0; i < 1000; i++)
 {
 	cout << "Strip mapping result, kpix #" << i << " is equal to strip #" << strip[i] << endl;
-}
+	}*/
 
 // Data file is the first and only arg
 //if ( argc != 3 && argc != 4 ) {
