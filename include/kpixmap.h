@@ -75,7 +75,7 @@ void map_kpix_to_strip(int *strip) // sensor_to_kpix (pixel *pixel_sensor)
 {
 	string line;
 	//cout << "DEBUG3: " << pixel_sensor[line_count].x << endl;
-	ifstream infile("./include/tracker_to_kpix_left.txt");
+	ifstream infile("/home/lycoris-dev/KPiX-Analysis/include/tracker_to_kpix_left.txt");
 	if (infile.good())
 	{
 		while(getline(infile,line))
