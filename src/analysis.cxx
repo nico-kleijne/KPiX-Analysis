@@ -1,19 +1,19 @@
-	//-----------------------------------------------------------------------------
-	// File          : analysis.cpp
-	// Author        : Uwe Kraemer (orig. Ryan Herbst) <uwe.kraemer@desy.de>
-	// Created       : 06/28/2017
-	// Project       : KPiX Analysis
-	//-----------------------------------------------------------------------------
-	// Description :
-	// General analysis of KPiX data.
-	//-----------------------------------------------------------------------------
-	// Copyright (c) 2012 by SLAC. All rights reserved.
-	// Proprietary and confidential to SLAC.
-	//-----------------------------------------------------------------------------
-	// Modification history :
-	// 05/30/2012: created
-	// 06/28/2017: large scale rewrite of original calibrationFitter.cpp
-	//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// File          : analysis.cpp
+// Author        : Uwe Kraemer (orig. Ryan Herbst) <uwe.kraemer@desy.de>
+// Created       : 06/28/2017
+// Project       : KPiX Analysis
+//-----------------------------------------------------------------------------
+// Description :
+// General analysis of KPiX data.
+//-----------------------------------------------------------------------------
+// Copyright (c) 2012 by SLAC. All rights reserved.
+// Proprietary and confidential to SLAC.
+//-----------------------------------------------------------------------------
+// Modification history :
+// 05/30/2012: created
+// 06/28/2017: large scale rewrite of original calibrationFitter.cpp
+//-----------------------------------------------------------------------------
 #include <iostream>
 #include <iomanip>
 #include <TFile.h>
@@ -44,10 +44,8 @@
 #include <string.h>
 
 #include "kpixmap.h"
+#include "kpix_left.h"
 using namespace std;
-	
-	
-	
 	
 
 //////////////////////////////////////////
@@ -174,8 +172,8 @@ ofstream 				channel_file_adc_mean;
 //double 					calib_slope[1024];
 //double					calib_y0[1024];
 
-int						strip[1024];
-map_kpix_to_strip(strip);
+ unordered_map<uint, uint> kpix2strip;
+ kpix2strip = kpix_left();
 
 pixel					pixel_kpix[1024];
 pixel_mapping(pixel_kpix);
@@ -195,7 +193,7 @@ std::vector<int> monster_channels;
 
 //for (int i = 0; i < 1000; i++)
 //{
-//	cout << "Strip mapping result, kpix #" << i << " is equal to strip #" << strip[i] << endl;
+//	cout << "Strip mapping result, kpix #" << i << " is equal to strip #" << kpix2strip.at(i) << endl;
 //}
 
 // Data file is the first and only arg
@@ -696,13 +694,13 @@ while ( dataRead.next(&event) ) //loop through binary file event structure until
 			channel_entries[kpix][bucket]->Fill(channel, weight);
 			channel_entries[kpix][4]->Fill(channel, weight);
 
-			strip_entries[kpix][bucket]->Fill(strip[channel], weight);
-			strip_entries[kpix][4]->Fill(strip[channel], weight);
+			strip_entries[kpix][bucket]->Fill(kpix2strip.at(channel), weight);
+			strip_entries[kpix][4]->Fill(kpix2strip.at(channel), weight);
 
 			times_kpix[kpix][bucket]->Fill(tstamp, weight);
 			times_kpix[kpix][4]->Fill(tstamp, weight);
 			trigger_counter[kpix] = trigger_counter[kpix] + (1.0/num_of_channels[kpix]);
-			if (strip[channel] == 9999)
+			if (kpix2strip.at(channel) == 9999)
 			{
 				channel_entries_no_strip[kpix][bucket]->Fill(channel,weight);
 				channel_entries_no_strip[kpix][4]->Fill(channel,weight);
