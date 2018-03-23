@@ -672,6 +672,7 @@ while ( dataRead.next(&event) )
 	
 	//std::vector<int> Assignment_number;
 	int num_trig_count[32][5] = {0};
+	  
 	//cout << " NEW EVENT " << endl;
 	for (x=0; x < event.count(); x++)
 	{
@@ -719,17 +720,19 @@ while ( dataRead.next(&event) )
 		  hist_buck_sum[kpix][channel]->Fill(value,weight);
 		  channel_entries_total->Fill(channel, weight);
 		  channel_time[kpix][channel][bucket][0]->Fill(tstamp, weight);
+
 		  total->Fill(value, weight);
 
 		  if ( kpix2strip.at(channel)!=9999 ){
+		    total_DisConnect->Fill(value, weight);
 		  }
 		  else {
+		    total_Connect->Fill(value, weight);
 		  }
 		  
 		  
 		  num_trig_count[kpix][bucket] += 1;
 		  num_trig_count[kpix][4] += 1;
-		  
 		  
 		  
 		  // Check for time difference between external time stamp and internal time stamp for noise filtering

@@ -25,7 +25,7 @@ for line in infile.readlines():
     if line.strip() and line[0].isdigit():
         fileline = line.split()
         #print line.split()[0], line.split()[1]
-        fheader.write("  m1.insert({"+line.split()[0]+","+line.split()[1]+"});\n")
+        fheader.write("  m1.insert(make_pair("+line.split()[0]+","+line.split()[1]+"));\n")
         
 infile.close()
 
