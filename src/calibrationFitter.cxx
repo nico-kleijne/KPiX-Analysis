@@ -528,6 +528,7 @@ int main ( int argc, char **argv ) {
                            tmp << "hist_" << serial << "_c" << dec << setw(4) << setfill('0') << channel;
                            tmp << "_b" << dec << bucket;
                            tmp << "_r" << dec << range;
+			   //cout<< "[debug] "<< tmp.str() << endl;
                            hist = new TH1F(tmp.str().c_str(),tmp.str().c_str(),8192,0,8192);
 
                            // Fill histogram
