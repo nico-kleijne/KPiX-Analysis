@@ -30,6 +30,7 @@
 #include <Data.h>
 #include <DataRead.h>
 #include <math.h>
+#include <cmath> /*std::isnan*/
 #include <fstream>
 #include <XmlVariables.h>
 using namespace std;
@@ -159,8 +160,8 @@ double calibCharge ( uint dac, bool positive, bool highCalib ) {
 void addDoubleToXml ( ofstream *xml, uint indent, string variable, Double_t value ) {
    uint x;
 
-   //   if ( ! isnan(value) ) {
-   if( !(value != value) ){
+   if ( ! isnan(value) ) {
+     //if( !(value != value) ){
      for (x=0; x < indent; x++) *xml << " ";
      *xml << "<" << variable << ">";
      *xml << value;

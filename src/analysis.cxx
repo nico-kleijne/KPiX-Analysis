@@ -281,6 +281,10 @@ TH1F *time_external= new TH1F("time external", "time external; Time/bunchClkCoun
 
 
 TH1F *total= new TH1F("Total_response", "total_response; Charge (ADC); #entries/#acq.cycles", 300, -0.5, 8191.5);
+TH1F *total_DisConnect= new TH1F("Total_response_disconnected", "total_respons of disconnected kpix channels; Charge (ADC); #entries/#acq.cycles", 300, -0.5, 8191.5);
+TH1F *total_Connect= new TH1F("Total_response_connected", "total response of connected kpix channels; Charge (ADC); #entries/#acq.cycles", 300, -0.5, 8191.5);
+ 
+ 
 TH1F *total_timed= new TH1F("Total_response_timed", "total_response_timed; Charge (ADC); #entries/#acq.cycles", 300, -0.5, 8191.5);
 
 
@@ -716,6 +720,11 @@ while ( dataRead.next(&event) )
 		  channel_entries_total->Fill(channel, weight);
 		  channel_time[kpix][channel][bucket][0]->Fill(tstamp, weight);
 		  total->Fill(value, weight);
+
+		  if ( kpix2strip.at(channel)!=9999 ){
+		  }
+		  else {
+		  }
 		  
 		  
 		  num_trig_count[kpix][bucket] += 1;
