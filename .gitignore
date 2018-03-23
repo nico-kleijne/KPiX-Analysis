@@ -7,3 +7,5 @@ bin/
 ChangeLog
 .cproject
 .project
+
+include/kpix_left.h

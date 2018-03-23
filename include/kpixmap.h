@@ -17,6 +17,49 @@ struct pixel {
 const double PI = 4*atan(1);
 const double cospi3 = cos(PI/3);
 
+//----- for tracker strips:
+
+
+
+void map_kpix_to_strip(int *strip) // sensor_to_kpix (pixel *pixel_sensor)
+{
+	string line;
+	//cout << "DEBUG3: " << pixel_sensor[line_count].x << endl;
+	ifstream infile("/home/lycoris-dev/KPiX-Analysis/data/tracker_to_kpix_left.txt");
+	//ifstream infile(dbpath);
+	if (infile.good())
+	{
+		while(getline(infile,line))
+		{
+			istringstream linestream(line);
+			int col[2];
+			int count = 0;
+			while (linestream >> col[count] || !linestream.eof())
+			{
+				if (linestream.fail())
+				{
+					linestream.clear();
+					string dummy;
+					linestream >> dummy;
+					continue;
+				}
+				count++;
+			}
+			strip[col[0]] = col[1];
+			if (col[1] == 302)	cout << col[0] << "      " << col[1] << endl;
+		}
+	}
+	else
+	{
+			cout << "MISSING MAPPING FILE!" << endl;
+	}
+}
+
+
+
+
+
+//------- for ECal pixels:
 
 int fill_pixels(int num_of_pixels, int row, int pixel_num, double y_max, double density, pixel *pixels)
 {
@@ -71,39 +114,6 @@ void map_sensor_to_kpix(pixel *pixel_sensor, pixel *pixel_kpix) // sensor_to_kpi
 	
 	
 }
-void map_kpix_to_strip(int *strip) // sensor_to_kpix (pixel *pixel_sensor)
-{
-	string line;
-	//cout << "DEBUG3: " << pixel_sensor[line_count].x << endl;
-	ifstream infile("/home/lycoris-dev/KPiX-Analysis/include/tracker_to_kpix_left.txt");
-	if (infile.good())
-	{
-		while(getline(infile,line))
-		{
-			istringstream linestream(line);
-			int col[2];
-			int count = 0;
-			while (linestream >> col[count] || !linestream.eof())
-			{
-				if (linestream.fail())
-				{
-					linestream.clear();
-					string dummy;
-					linestream >> dummy;
-					continue;
-				}
-				count++;
-			}
-			strip[col[0]] = col[1];
-			if (col[1] == 302)	cout << col[0] << "      " << col[1] << endl;
-		}
-	}
-	else
-	{
-			cout << "MISSING MAPPING FILE!" << endl;
-	}
-}
-
 
 // //int main()
 void pixel_mapping(pixel *pixel_ext) 
