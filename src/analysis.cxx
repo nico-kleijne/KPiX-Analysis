@@ -296,22 +296,22 @@ TH1F *ExtTrigPerCycle = new TH1F ("external_triggers_per_cycle", "ext_trig_per_a
 //TH1F *three_coincidence_channel_entries= new TH1F("three_coincidence_channel_entries", "three_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 TH1F *full_coincidence_channel_entries= new TH1F("full_coincidence_channel_entries", "full_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 FolderName.str("");
-FolderName << "Events";
+FolderName << "Acquisition_Cycles";
 General_folder->mkdir(FolderName.str().c_str());
-TDirectory *gen_event_folder = General_folder->GetDirectory(FolderName.str().c_str());
-rFile->cd(gen_event_folder->GetPath());
+TDirectory *gen_cycle_folder = General_folder->GetDirectory(FolderName.str().c_str());
+rFile->cd(gen_cycle_folder->GetPath());
 
 
-for (int events = 0; events < 1000; events++) // produce subfolders per event
+for (int cycles = 0; cycles < 1000; cycles++) // produce subfolders per cycle
 {
 	FolderName.str("");
-	FolderName << "Event_" << events;
-	gen_event_folder->mkdir(FolderName.str().c_str());
-	TDirectory *events_folder = gen_event_folder->GetDirectory(FolderName.str().c_str());
-	events_folder->cd();
+	FolderName << "Cycle_" << cycles;
+	gen_cycle_folder->mkdir(FolderName.str().c_str());
+	TDirectory *cycles_folder = gen_cycle_folder->GetDirectory(FolderName.str().c_str());
+	cycles_folder->cd();
 	tmp.str("");
-	tmp << "time_distribution_external" << "_evt_" << events;
-	event_time_ext[events] = new TH1F(tmp.str().c_str(), "time_distribution_external; time/BunchClkCount; #entries/#acq.cycles", 8192, -0.5, 8191.5);
+	tmp << "time_distribution_external" << "_evt_" << cycles;
+	cycle_time_ext[cycles] = new TH1F(tmp.str().c_str(), "time_distribution_external; time/BunchClkCount; #entries/#acq.cycles", 8192, -0.5, 8191.5);
 }
 
 while ( dataRead.next(&event) ) // event read to check for filled channels and kpix to reduce number of empty histograms.
@@ -451,29 +451,29 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 			times_kpix_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
 		}
 		FolderName.str("");
-		FolderName << "Events";
+		FolderName << "cycles";
 		kpix_folder->mkdir(FolderName.str().c_str());
-		TDirectory *event_folder = kpix_folder->GetDirectory(FolderName.str().c_str());
-		rFile->cd(event_folder->GetPath());
-		for (int events = 0; events < 1000; events++)
+		TDirectory *cycle_folder = kpix_folder->GetDirectory(FolderName.str().c_str());
+		rFile->cd(cycle_folder->GetPath());
+		for (int cycles = 0; cycles < 1000; cycles++)
 		{
 			FolderName.str("");
-			FolderName << "Event_" << events;
-			event_folder->mkdir(FolderName.str().c_str());
-			TDirectory *events_folder = event_folder->GetDirectory(FolderName.str().c_str());
-			events_folder->cd();
+			FolderName << "cycle_" << cycles;
+			cycle_folder->mkdir(FolderName.str().c_str());
+			TDirectory *cycles_folder = cycle_folder->GetDirectory(FolderName.str().c_str());
+			cycles_folder->cd();
 			tmp.str("");
-			tmp << "time_distribution_k_" << kpix << "_evt_" << events;
-			event_time[kpix][events] = new TH1F(tmp.str().c_str(), "time_distribution; time/BunchClkCount; #entries", 8192, -0.5, 8191.5);
+			tmp << "time_distribution_k_" << kpix << "_evt_" << cycles;
+			cycle_time[kpix][cycles] = new TH1F(tmp.str().c_str(), "time_distribution; time/BunchClkCount; #entries", 8192, -0.5, 8191.5);
 			tmp.str("");
-			tmp << "assigned_channels_k" << kpix << "_evt_" << events;
-			AssignedChannelHist[kpix][events]  = new TH1F (tmp.str().c_str(), "assigned_channels_per_ext_trig;  external_trigger_number; #assigned_channels ",100, -0.5, 99.5);
+			tmp << "assigned_channels_k" << kpix << "_evt_" << cycles;
+			AssignedChannelHist[kpix][cycles]  = new TH1F (tmp.str().c_str(), "assigned_channels_per_ext_trig;  external_trigger_number; #assigned_channels ",100, -0.5, 99.5);
 			tmp.str("");
-			tmp << "trigger_difference_k" << kpix << "_evt_" << events;
-			trigger_difference_per_acq[kpix][events]  = new TH1F (tmp.str().c_str(), "trigger_difference;  #entries/#acq.cycles; #Delta T (BunchClkCount) ",16384, -8192.5, 8191.5);
+			tmp << "trigger_difference_k" << kpix << "_evt_" << cycles;
+			trigger_difference_per_acq[kpix][cycles]  = new TH1F (tmp.str().c_str(), "trigger_difference;  #entries/#acq.cycles; #Delta T (BunchClkCount) ",16384, -8192.5, 8191.5);
 			//tmp.str("");
-			//tmp << "assigned_number_k" << kpix << "_evt_" << events;
-			//AssignedNumberHist[kpix][events]  = new TH1F (tmp.str().c_str(), "assigned_NumberOfChannel_per_ext_trig;  #same_assignement; #entries/#acq.cycles",40,0,40);
+			//tmp << "assigned_number_k" << kpix << "_evt_" << cycles;
+			//AssignedNumberHist[kpix][cycles]  = new TH1F (tmp.str().c_str(), "assigned_NumberOfChannel_per_ext_trig;  #same_assignement; #entries/#acq.cycles",40,0,40);
 		}
 		FolderName.str("");
 		FolderName << "Channels";
