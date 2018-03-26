@@ -1,3 +1,10 @@
+/*
+ *  Simple ROOT macro to check kpix channel w/ evts < 3.8 per Acq. Cycle
+ *
+ *  Usage: root -l 'debugger.C("xxxx.bin.root")'
+ *
+ */
+
 void debugger(string infile){
 
   if (infile.empty()) infile ="/scratch/data/tracker_test/2018_03_22_11_16_41.bin.root";

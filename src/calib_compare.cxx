@@ -58,7 +58,7 @@ int main ( int argc, char **argv ) {
 
   TCanvas c1;
  
-  if (argc < 2 || argc > 3) {
+  if (argc != 2) {
     cout << "Error: wrong arguments... \n"
 	 << " [Usage]: ./calib_compare conf.txt [output.root]"<< endl;
     return 0;
