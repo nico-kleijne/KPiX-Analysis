@@ -178,8 +178,8 @@ TH1F* 					AssignedChannelHist[32][1000];
 TH1F* 					AssignedChannelHist_Total[32];
 TH1F* 					trigger_difference_per_acq[32][1000];
 //TH1F* 					AssignedNumberHist[32][1000];
-TH1F*					event_time[32][1000];
-TH1F*					event_time_ext[1000];
+TH1F*					cycle_time[32][1000];
+TH1F*					cycle_time_ext[1000];
 std::vector<int> monster_channels;
 
 
@@ -580,8 +580,8 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 // Data read for first 1000 events for detailed look into single event structure
 //////////////////////////////////////////
 dataRead.open(argv[1]); //open binary file
-int event_num = 0;
-int event_num_ext = -1;
+int cycle_num = 0;
+int cycle_num_ext = -1;
 while ( dataRead.next(&event) ) //loop through binary file event structure until end of file
 {
 
@@ -600,14 +600,14 @@ while ( dataRead.next(&event) ) //loop through binary file event structure until
 		range   = sample->getSampleRange();
 		if (type == 2) //if type of event is ==2, the event is of type external timestamp
 		{
-			//cout << event_num << endl;
-			//cout << event_num_ext << endl;
-			if (x == 0) event_num_ext++;
+			//cout << cycle_num << endl;
+			//cout << cycle_num_ext << endl;
+			if (x == 0) cycle_num_ext++;
 			double time = tstamp + double(value * 0.125);
-			if (event_num_ext < 1000)
+			if (cycle_num_ext < 1000)
 			{
-				//cout << event_num_ext <<  " " << time << endl;
-				event_time_ext[event_num_ext]->Fill(time);
+				//cout << cycle_num_ext <<  " " << time << endl;
+				cycle_time_ext[cycle_num_ext]->Fill(time);
 			}
 		}
 		if ( type == KpixSample::Data ) // If event is of type KPiX data
@@ -638,13 +638,13 @@ while ( dataRead.next(&event) ) //loop through binary file event structure until
 				times_kpix_no_monster[kpix][bucket]->Fill(tstamp, weight);
 				times_kpix_no_monster[kpix][4]->Fill(tstamp, weight);
 			}
-			if (event_num < 1000)
+			if (cycle_num < 1000)
 			{
-				 event_time[kpix][event_num]->Fill(tstamp);
+				 cycle_time[kpix][cycle_num]->Fill(tstamp);
 			 }
 		}
 	}
-	event_num++;
+	cycle_num++;
 	//if (trigger_counter[26] > 4) cout << trigger_counter[26] << endl;
 	if (kpixFound[26]) acq_num_ext[26]->Fill(trigger_counter[26]); // trigger counting for monster check
 	if (kpixFound[28]) acq_num_ext[28]->Fill(trigger_counter[28]);
@@ -658,7 +658,7 @@ int three_coincidence = 0;
 int extern_trigger_id={0};
 
 
-event_num = 0;
+cycle_num = 0;
 
 
 while ( dataRead.next(&event) )
@@ -765,10 +765,10 @@ while ( dataRead.next(&event) )
 		      assigned_number =  distance(trig_diff_list.begin(), min_element(trig_diff_list.begin(), trig_diff_list.end())); //position of smallest element in trigger difference vector
 		      time_diff_kpix_ext[kpix].push_back(trig_diff);
 		      //cout << assigned_number << endl;
-		      if (event_num < 1000)
+		      if (cycle_num < 1000)
 			{
-			  AssignedChannelHist[kpix][event_num]->Fill(assigned_number);
-			  trigger_difference_per_acq[kpix][event_num]->Fill(trig_diff);
+			  AssignedChannelHist[kpix][cycle_num]->Fill(assigned_number);
+			  trigger_difference_per_acq[kpix][cycle_num]->Fill(trig_diff);
 			}
 		      
 		      AssignedTrigger[kpix].push_back(assigned_number);
@@ -804,7 +804,7 @@ while ( dataRead.next(&event) )
 	//for (unsigned int k = 0; k < Assignment_number.size(); k++)
 	//{
 	//cout << "DEBUG: Assignment_Number " << k << " = " << Assignment_number.at(k) << endl;
-		//if (event_num < 1000) AssignedNumberHist[kpix][event_num]->Fill(Assignment_number.at(k));
+		//if (cycle_num < 1000) AssignedNumberHist[kpix][cycle_num]->Fill(Assignment_number.at(k));
 	//}
 	ExtTrigPerCycle->Fill(time_ext.size());
 	for (int h = 0; h<32; ++h)
@@ -834,7 +834,7 @@ while ( dataRead.next(&event) )
 	extern_trigger_id=extern_trigger_id+time_ext.size();  // Counting which global external trigger was matched to a channel
 	
 	////   Show progress
-	event_num++;
+	cycle_num++;
 	filePos  = dataRead.pos();
 	currPct = (uint)(((double)filePos / (double)fileSize) * 100.0);
 	if ( currPct != lastPct ) {
