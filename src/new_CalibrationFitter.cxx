@@ -19,6 +19,7 @@
 #include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TROOT.h>
 #include <TCanvas.h>
 #include <TMultiGraph.h>
 #include <TApplication.h>
@@ -231,6 +232,9 @@ int main ( int argc, char **argv ) {
   bool                   b0CalibHigh;
   uint                   injectTime[5];
   uint                   eventCount;
+
+  uint                   skip_cycles_front;
+
   string                 outRoot;
   string                 outXml;
   string                 outCsv;
@@ -295,13 +299,15 @@ int main ( int argc, char **argv ) {
   }
   
   // Data file is the first and only arg
-  //if ( argc != 3 && argc != 4 ) {
-  //cout << "Usage: calibrationFitter config_file data_file [debug_file]\n";
-  //return(1);
-  //}
+  if ( argc != 3 && argc != 4 ) {
+    cout << "Usage: new_calibrationFitter config_file data_file [skip_cycles_front]\n";
+    return(1);
+  }
   
-  if ( argc == 4 ) debug.open(argv[3],ios::out | ios::trunc);
-  
+  //if ( argc == 4 ) debug.open(argv[3],ios::out | ios::trunc);
+  if ( argc == 4 ) skip_cycles_front = atoi( argv[3] );
+  else skip_cycles_front = 0;
+    
   // Read configuration
   if ( ! config.parseFile("config",argv[1]) ) {
     cout << "Failed to read configuration from " << argv[1] << endl;
@@ -339,7 +345,7 @@ int main ( int argc, char **argv ) {
   
   // Create output names
   tmp.str("");
-  tmp << argv[2] << ".newCalib.root";
+  tmp << argv[2] << ".test.root";
   outRoot = tmp.str();
   tmp.str("");
   tmp << argv[2] << ".newCalib.xml";
@@ -697,10 +703,10 @@ int main ( int argc, char **argv ) {
   
   	rFile->cd(); // move into root folder base
 	FolderName.str("");
-	FolderName << "Pedestals";
+	FolderName << "Calibration_and_Residuals";
 	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
 	TDirectory *calibration_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
-	pedestal_folder->cd(); // move into subdirectory
+	calibration_folder->cd(); // move into subdirectory
   
   // Process each kpix device
   for (kpix=0; kpix<32; kpix++) {
