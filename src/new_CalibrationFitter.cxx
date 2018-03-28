@@ -305,9 +305,12 @@ int main ( int argc, char **argv ) {
   }
   
   //if ( argc == 4 ) debug.open(argv[3],ios::out | ios::trunc);
-  if ( argc == 4 ) skip_cycles_front = atoi( argv[3] );
+  if ( argc == 4 ){
+    skip_cycles_front = atoi( argv[3] );
+    cout<< "I am skipping first events: " << skip_cycles_front << endl;
+  }
   else skip_cycles_front = 0;
-    
+
   // Read configuration
   if ( ! config.parseFile("config",argv[1]) ) {
     cout << "Failed to read configuration from " << argv[1] << endl;
@@ -383,6 +386,7 @@ int main ( int argc, char **argv ) {
   
   // Process each event
   while ( dataRead.next(&event) ) {
+    //if ( eventCount >= skip_cycles_front){
     
     // Get calibration state
     calState   = dataRead.getStatus("CalState");
@@ -451,7 +455,8 @@ int main ( int argc, char **argv ) {
 	
       }
     }
-    
+    //} // skip cycle ends
+
     // Show progress
     filePos  = dataRead.pos();
     currPct = (uint)(((double)filePos / (double)fileSize) * 100.0);
@@ -459,6 +464,7 @@ int main ( int argc, char **argv ) {
       cout << "\rReading File: " << currPct << " %      " << flush;
       lastPct = currPct;
     }
+    
     eventCount++;
   }
   cout << "\rReading File: Done.               " << endl;
