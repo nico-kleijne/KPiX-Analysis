@@ -151,7 +151,7 @@ TH1F *summary12 = new TH1F("SlopeRMS", "Slope RMS", 1000, 0, 20);
 TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
 TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
 
-TH2F *summary2_1 = new TH2F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5, 200, -100, 100);
+TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
 
 // Function to compute calibration charge
 double calibCharge ( uint dac, bool positive, bool highCalib ) {
@@ -860,7 +860,9 @@ int main ( int argc, char **argv ) {
 		      summary14->Fill( ped_charge_err * pow(10,15) );
 		      
 		      summary2->Fill( grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) );
-		      summary2_1->Fill( channel, grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) );
+		      
+		      summary2_1->SetBinContent( channel+1, grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15));
+		      //summary2_1->Fill( channel, grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) );
 		      
 		      summary3->Fill( grCalib->GetFunction("pol1")->GetParameter(0));
 		      
@@ -935,6 +937,7 @@ int main ( int argc, char **argv ) {
     }
   }
   summary2->Write();
+  summary2_1->Write();
   summary3->Write();
   summary4->Write();
   summary12->Write();
