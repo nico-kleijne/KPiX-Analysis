@@ -140,18 +140,7 @@ public:
     }
   }
 };
-TH1F *summary1 = new TH1F("Pedestals_dac", "Pedestals [DAC]", 9000, 0, 9000);
-TH1F *summary2 = new TH1F("Slope", "Slope [DAC/fC]", 200, -100, 100);
-TH1F *summary3 = new TH1F("Intercept", "Intercept [DAC]", 2000, -1000, 1000);
-TH1F *summary4 = new TH1F("Pedestals_fc", "Pedestals [fC]", 1000, -100, 100);
 
-TH1F *summary11 = new TH1F("PedestalsRMS", "Pedestal RMS", 200, 0, 20);
-TH1F *summary111= new TH1F("PedestalRMS|AmplitudeCorrected", "Corrected Pedestal RMS", 200, 0, 0.1);
-TH1F *summary12 = new TH1F("SlopeRMS", "Slope RMS", 1000, 0, 20);
-TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
-TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
-
-TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
 
 // Function to compute calibration charge
 double calibCharge ( uint dac, bool positive, bool highCalib ) {
@@ -289,6 +278,7 @@ int main ( int argc, char **argv ) {
   uint                   badChannelCnt;
   uint					noiseSigmaCnt;
   uint                    errorSigmaCnt;
+  stringstream			 FolderName;
   
   // Init structure
   for (kpix=0; kpix < 32; kpix++) {
@@ -518,6 +508,9 @@ int main ( int argc, char **argv ) {
   xml << config.getXml();
   xml << "   </config>"<< endl;
   
+  
+  
+  
   // get calibration mode variables for charge computation
   positive    = (dataRead.getConfig("cntrlFpga:kpixAsic:CntrlPolarity") == "Positive");
   b0CalibHigh = (dataRead.getConfig("cntrlFpga:kpixAsic:CntrlCalibHigh") == "True");
@@ -530,6 +523,36 @@ int main ( int argc, char **argv ) {
   //////////////////////////////////////////
   
   // Process each kpix device
+  
+	rFile->cd(); // move into root folder base
+	FolderName.str("");
+	FolderName << "General";
+	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
+	TDirectory *General_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
+	General_folder->cd(); // move into subdirectory
+  
+	TH1F *summary1 = new TH1F("Pedestals_dac", "Pedestals [DAC]", 9000, 0, 9000);
+	TH1F *summary2 = new TH1F("Slope", "Slope [DAC/fC]", 200, -100, 100);
+	TH1F *summary3 = new TH1F("Intercept", "Intercept [DAC]", 2000, -1000, 1000);
+	TH1F *summary4 = new TH1F("Pedestals_fc", "Pedestals [fC]", 1000, -100, 100);
+	
+	TH1F *summary11 = new TH1F("PedestalsRMS", "Pedestal RMS", 200, 0, 20);
+	TH1F *summary111= new TH1F("PedestalRMS|AmplitudeCorrected", "Corrected Pedestal RMS", 200, 0, 0.1);
+	TH1F *summary12 = new TH1F("SlopeRMS", "Slope RMS", 1000, 0, 20);
+	TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
+	TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
+	
+	TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
+	
+	
+  
+	rFile->cd(); // move into root folder base
+	FolderName.str("");
+	FolderName << "Pedestals";
+	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
+	TDirectory *pedestal_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
+	pedestal_folder->cd(); // move into subdirectory
+	
   for (kpix=0; kpix<32; kpix++) {
     if ( kpixFound[kpix] ) {
       
@@ -671,6 +694,13 @@ int main ( int argc, char **argv ) {
   //////////////////////////////////////////
   // Process Calibration
   //////////////////////////////////////////
+  
+  	rFile->cd(); // move into root folder base
+	FolderName.str("");
+	FolderName << "Pedestals";
+	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
+	TDirectory *calibration_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
+	pedestal_folder->cd(); // move into subdirectory
   
   // Process each kpix device
   for (kpix=0; kpix<32; kpix++) {
@@ -985,6 +1015,9 @@ int main ( int argc, char **argv ) {
   
   xml << "</calibrationData>" << endl;
   xml.close();
+	rFile->Write();
+	gROOT->GetListOfFiles()->Remove(rFile); //delete cross links that make production of subfolder structure take forever
+	rFile->Close();
   delete rFile;
   cout << "EVENT COUNT: " << eventCount << endl;
   // Cleanup
