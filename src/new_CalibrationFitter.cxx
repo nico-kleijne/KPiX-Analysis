@@ -284,6 +284,8 @@ int main ( int argc, char **argv ) {
   uint                    errorSigmaCnt;
   stringstream			 FolderName;
   
+  uint 					noise_cut = 1.0;
+  
   // Init structure
   for (kpix=0; kpix < 32; kpix++) {
     for (channel=0; channel < 1024; channel++) {
@@ -348,7 +350,7 @@ int main ( int argc, char **argv ) {
   
   // Create output names
   tmp.str("");
-  tmp << argv[2] << ".test.root";
+  tmp << argv[2] << ".newCalib.root";
   outRoot = tmp.str();
   tmp.str("");
   tmp << argv[2] << ".newCalib.xml";
@@ -503,11 +505,11 @@ int main ( int argc, char **argv ) {
   csv << endl;
   
   // Open noise/bad channel list files
-  channel_file_bad.open ("/home/kraemeru/afs/bin/channel_list_bad.txt");
-  channel_file_bad_fit.open ("/home/kraemeru/afs/bin/channel_list_bad_fit.txt");
-  channel_file_noise.open ("/home/kraemeru/afs/bin/channel_list_noise.txt");
-  channel_file_calib.open("/home/kraemeru/afs/bin/channel_list_calib.txt");
-  channel_file_adc_mean.open("/home/kraemeru/afs/bin/channel_adc_mean.txt");
+  channel_file_bad.open ("~/channel_list_bad.txt");
+  channel_file_bad_fit.open ("~/channel_list_bad_fit.txt");
+  channel_file_noise.open ("./channel_list_noise.txt");
+  channel_file_calib.open("~/channel_list_calib.txt");
+  channel_file_adc_mean.open("~/channel_adc_mean.txt");
   // Add notes
   xml << "   <sourceFile>" << argv[2] << "</sourceFile>" << endl;
   xml << "   <user>" <<  getlogin() << "</user>" << endl;
@@ -661,7 +663,7 @@ int main ( int argc, char **argv ) {
 		      badMean[kpix][channel] = true;
 		      noiseSigmaCnt++;
 		      //cout << endl << "Noisy channel with " << "sigma = " << chanData[kpix][channel][bucket][range]->baseFitSigma << endl << endl;
-		      channel_file_noise << channel << endl;
+		     // channel_file_noise << channel << endl;
 		    }
 		    
 		    // Determine weird channels with only a single peak if fitted sigma is below the error of sigma
@@ -669,7 +671,7 @@ int main ( int argc, char **argv ) {
 		      badMean[kpix][channel] = true;
 		      errorSigmaCnt++;
 		      //cout << endl << "Sigma below error value with " << "sigma = " << chanData[kpix][channel][bucket][range]->baseFitSigma << endl << endl;
-		      channel_file_bad << channel << endl;
+		     // channel_file_bad << channel << endl;
 		    }
 		  }
 		  else if ( findBadMeanFit || findBadMeanChisq ) {
@@ -839,7 +841,7 @@ int main ( int argc, char **argv ) {
 		    tmp << "_r" << dec << range;
 		    grCalib->SetTitle(tmp.str().c_str());
 		    grCalib->Write(tmp.str().c_str());
-		    channel_file_calib << channel << endl;
+		   // channel_file_calib << channel << endl;
 		    
 		    
 		    //create histogram that will have all the DAC measurement of all channels for a specific injected charge
@@ -900,7 +902,10 @@ int main ( int argc, char **argv ) {
 		      
 		      summary4->Fill( ped_charge * pow(10,15) );
 		      summary14->Fill( ped_charge_err * pow(10,15) );
-		      
+		      if (ped_charge_err * pow(10,15) >= noise_cut)
+		      {
+				  channel_file_noise << channel << endl ;
+			  }
 		      summary2->Fill( grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) );
 		      
 		      summary2_1->SetBinContent( channel+1, grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15));
@@ -922,7 +927,7 @@ int main ( int argc, char **argv ) {
 			badGain[kpix][channel] = true;
 			badGainFitCnt++;
 			//cout << endl << "Bad calibration fit " << "slope = " << grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) << endl << endl;
-			channel_file_bad_fit << channel << endl;
+			//channel_file_bad_fit << channel << endl;
 		      }
 		      
 		      // Determine bad channel from fitted chisq
@@ -1046,6 +1051,7 @@ int main ( int argc, char **argv ) {
   dataRead.close();
   channel_file_bad.close();
   channel_file_bad_fit.close();
+  cout << "Writing noisy channel numbers to: ./channel_list_noise.txt" << endl;
   channel_file_noise.close();
   channel_file_calib.close();
   channel_file_adc_mean.close();
