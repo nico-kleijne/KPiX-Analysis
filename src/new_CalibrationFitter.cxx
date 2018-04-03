@@ -17,6 +17,7 @@
 #include <iostream>
 #include <iomanip>
 #include <TFile.h>
+#include <TF1.h>
 #include <TH1F.h>
 #include <TH2F.h>
 #include <TROOT.h>
@@ -232,6 +233,7 @@ int main ( int argc, char **argv ) {
   double                 grRes[256];
   uint                   grCount;
   TGraphErrors           *grCalib;
+  TF1                    *fitCalib;
   TGraph                 *grResid;
   bool                   positive;
   bool                   b0CalibHigh;
@@ -346,8 +348,14 @@ int main ( int argc, char **argv ) {
   fitMax[1]        = config.getDouble("GainFitMaxR1");
   chargeError[0]   = config.getDouble("GainChargeErrorR0");
   chargeError[1]   = config.getDouble("GainChargeErrorR1");
-  
-	// Open data file
+
+  // Init a customized pol1, fit range will be re-range in fit()
+  fitCalib = new TF1("fitCalib", "pol1",fitMin[0],fitMax[0] );
+  fitCalib -> FixParameter( 0, 0 ); // offset to 0
+  fitCalib -> SetParameter( 1, 15); // slope
+ 
+
+  // Open data file
   if ( ! dataRead.open(argv[2]) ) {
     cout << "Error opening data file " << argv[2] << endl;
     return(1);
@@ -842,11 +850,14 @@ int main ( int argc, char **argv ) {
 		  
 		  // Create graph
 		  if ( grCount > 0 ) {
+	    
 		    grCalib = new TGraphErrors(grCount,grX,grY,grXErr,grYErr);
 		    grCalib->Draw("Ap");
-		    grCalib->Fit("pol1","eq","",fitMin[range],fitMax[range]);
-		    grCalib->GetFunction("pol1")->SetLineWidth(1);
-		    
+		    //grCalib->Fit("pol1","eq","",fitMin[range],fitMax[range]);
+		    grCalib->Fit("fitCalib", "BR", "",fitMin[range],fitMax[range]);
+		    //grCalib->GetFunction("pol1")->SetLineWidth(1);
+		    grCalib->GetFunction("fitCalib")->SetLineWidth(1);
+		      
 		    // Create name and write
 		    tmp.str("");
 		    tmp << "calib_" << serial << "_c" << dec << setw(4) << setfill('0') << channel;
