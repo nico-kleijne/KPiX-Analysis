@@ -56,6 +56,11 @@ public:
   double       baseFitSigmaErr;
   double       baseFitChisquare;
   
+  
+  // Baseline hist data
+  double       baseHistMean;
+  double       baseHistRMS;
+  
   // Calib Data
   double       calibCount[256];
   double       calibMean[256];
@@ -558,6 +563,11 @@ int main ( int argc, char **argv ) {
 	
 	TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
 	
+	TH1F *PedestalsRMS_fc2 = new TH1F("PedestalsRMS_fc2", "Pedestals RMS [fC]", 1000, 0, 10);
+	TH1F *PedestalsRMS_fc3 = new TH1F("PedestalsRMS_fc3", "Pedestals RMS [fC]", 1000, 0, 10);
+	
+	TH1F *Pedestals_fc2 = new TH1F("Pedestals_fc2", "Pedestals [fC]", 1000, -100, 100);
+	TH1F *Pedestals_fc3 = new TH1F("Pedestals_fc3", "Pedestals [fC]", 1000, -100, 100);
 	
   
 	rFile->cd(); // move into root folder base
@@ -620,6 +630,9 @@ int main ( int argc, char **argv ) {
 						 chanData[kpix][channel][bucket][range]->baseMax);
 		  hist->Fit("gaus","q");
 		  hist->Write();
+		  
+		  chanData[kpix][channel][bucket][range]->baseHistMean       = hist->GetMean();
+		  chanData[kpix][channel][bucket][range]->baseHistRMS        = hist->GetRMS();
 		  
 		  if ( hist->GetFunction("gaus") ) {
 		    chanData[kpix][channel][bucket][range]->baseFitMean      = hist->GetFunction("gaus")->GetParameter(1);
@@ -888,7 +901,9 @@ int main ( int argc, char **argv ) {
 		      csv << "," << grCalib->GetFunction("pol1")->GetParError(0);
 		      csv << "," << chisqNdf;
 		      
-		      //				 double ped_charge = ( chanData[kpix][channel][bucket][range]->baseFitMean - grCalib->GetFunction("pol1")->GetParameter(0) ) / grCalib->GetFunction("pol1")->GetParameter(1);
+		      
+		      double ped_charge3 = ( chanData[kpix][channel][bucket][range]->baseHistMean - grCalib->GetFunction("pol1")->GetParameter(0) ) / grCalib->GetFunction("pol1")->GetParameter(1);
+		      double ped_charge2 = ( chanData[kpix][channel][bucket][range]->baseFitMean - grCalib->GetFunction("pol1")->GetParameter(0) ) / grCalib->GetFunction("pol1")->GetParameter(1);
 		      double ped_charge = ( chanData[kpix][channel][bucket][range]->baseFitMean ) / grCalib->GetFunction("pol1")->GetParameter(1);
 		      
 		      double ped_charge_err = sqrt( ( chanData[kpix][channel][bucket][range]->baseFitSigma / grCalib->GetFunction("pol1")->GetParameter(1) *
@@ -897,11 +912,39 @@ int main ( int argc, char **argv ) {
 						      ( - grCalib->GetFunction("pol1")->GetParError(0) / grCalib->GetFunction("pol1")->GetParameter(1)) ) +
 						    ( - 1 / ( grCalib->GetFunction("pol1")->GetParError(1) * grCalib->GetFunction("pol1")->GetParError(1) ) * 
 						      ( - 1 / ( grCalib->GetFunction("pol1")->GetParError(1) * grCalib->GetFunction("pol1")->GetParError(1) ) ) ) );
-		      
-		      //				 cout<<" ped_charge "<<ped_charge*pow(10,15)<< " error " << ped_charge_err*pow(10,15)<<endl;
+						      
+			double ped_charge_err2 = sqrt( ( chanData[kpix][channel][bucket][range]->baseFitSigma / grCalib->GetFunction("pol1")->GetParameter(1) *
+						      chanData[kpix][channel][bucket][range]->baseFitSigma / grCalib->GetFunction("pol1")->GetParameter(1) ) +
+						    ( - grCalib->GetFunction("pol1")->GetParError(0) / grCalib->GetFunction("pol1")->GetParameter(1) *
+						      ( - grCalib->GetFunction("pol1")->GetParError(0) / grCalib->GetFunction("pol1")->GetParameter(1)) ) +
+						    ( - ( chanData[kpix][channel][bucket][range]->baseFitMean - grCalib->GetFunction("pol1")->GetParameter(0) )  / 
+						    ( grCalib->GetFunction("pol1")->GetParError(1) * grCalib->GetFunction("pol1")->GetParError(1) ) * 
+						       ( - ( chanData[kpix][channel][bucket][range]->baseFitMean - grCalib->GetFunction("pol1")->GetParameter(0) )  / 
+						    ( grCalib->GetFunction("pol1")->GetParError(1) * grCalib->GetFunction("pol1")->GetParError(1) ) ) ) );
+						      
+						      
+			double ped_charge_err3 = sqrt( ( chanData[kpix][channel][bucket][range]->baseHistRMS / grCalib->GetFunction("pol1")->GetParameter(1) *
+						      chanData[kpix][channel][bucket][range]->baseHistRMS / grCalib->GetFunction("pol1")->GetParameter(1) ) +
+						    ( - grCalib->GetFunction("pol1")->GetParError(0) / grCalib->GetFunction("pol1")->GetParameter(1) *
+						      ( - grCalib->GetFunction("pol1")->GetParError(0) / grCalib->GetFunction("pol1")->GetParameter(1)) ) +
+						    ( - ( chanData[kpix][channel][bucket][range]->baseHistMean - grCalib->GetFunction("pol1")->GetParameter(0) )  / 
+						    ( grCalib->GetFunction("pol1")->GetParError(1) * grCalib->GetFunction("pol1")->GetParError(1) ) * 
+						       ( - ( chanData[kpix][channel][bucket][range]->baseHistMean - grCalib->GetFunction("pol1")->GetParameter(0) )  / 
+						    ( grCalib->GetFunction("pol1")->GetParError(1) * grCalib->GetFunction("pol1")->GetParError(1) ) ) ) );
+		      cout << endl;
+		      cout<<" ped_charge 1 = "<<ped_charge*pow(10,15)<< " error " << ped_charge_err*pow(10,15)<<endl;
+		      cout<<" ped_charge 2 = "<<ped_charge2*pow(10,15)<< " error " << ped_charge_err2*pow(10,15)<<endl;
+		      cout<<" ped_charge 3 = "<<ped_charge3*pow(10,15)<< " error " << ped_charge_err3*pow(10,15)<<endl;
 		      
 		      summary4->Fill( ped_charge * pow(10,15) );
 		      summary14->Fill( ped_charge_err * pow(10,15) );
+		      
+		      Pedestals_fc2->Fill( ped_charge2 * pow(10,15) );
+		      Pedestals_fc3->Fill( ped_charge3 * pow(10,15) );
+		      
+		      PedestalsRMS_fc2->Fill( ped_charge_err2 * pow(10,15) );
+		      PedestalsRMS_fc3->Fill( ped_charge_err3 * pow(10,15) );
+		      
 		      if (ped_charge_err * pow(10,15) >= noise_cut)
 		      {
 				  channel_file_noise << channel << endl ;
