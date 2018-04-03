@@ -19,6 +19,7 @@
 #include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TROOT.h>
 #include <TCanvas.h>
 #include <TMultiGraph.h>
 #include <TApplication.h>
@@ -140,18 +141,7 @@ public:
     }
   }
 };
-TH1F *summary1 = new TH1F("Pedestals_dac", "Pedestals [DAC]", 9000, 0, 9000);
-TH1F *summary2 = new TH1F("Slope", "Slope [DAC/fC]", 200, -100, 100);
-TH1F *summary3 = new TH1F("Intercept", "Intercept [DAC]", 2000, -1000, 1000);
-TH1F *summary4 = new TH1F("Pedestals_fc", "Pedestals [fC]", 1000, -100, 100);
 
-TH1F *summary11 = new TH1F("PedestalsRMS", "Pedestal RMS", 200, 0, 20);
-TH1F *summary111= new TH1F("PedestalRMS|AmplitudeCorrected", "Corrected Pedestal RMS", 200, 0, 0.1);
-TH1F *summary12 = new TH1F("SlopeRMS", "Slope RMS", 1000, 0, 20);
-TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
-TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
-
-TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
 
 // Function to compute calibration charge
 double calibCharge ( uint dac, bool positive, bool highCalib ) {
@@ -242,6 +232,9 @@ int main ( int argc, char **argv ) {
   bool                   b0CalibHigh;
   uint                   injectTime[5];
   uint                   eventCount;
+
+  uint                   skip_cycles_front;
+
   string                 outRoot;
   string                 outXml;
   string                 outCsv;
@@ -289,6 +282,9 @@ int main ( int argc, char **argv ) {
   uint                   badChannelCnt;
   uint					noiseSigmaCnt;
   uint                    errorSigmaCnt;
+  stringstream			 FolderName;
+  
+  uint 					noise_cut = 1.0;
   
   // Init structure
   for (kpix=0; kpix < 32; kpix++) {
@@ -305,13 +301,18 @@ int main ( int argc, char **argv ) {
   }
   
   // Data file is the first and only arg
-  //if ( argc != 3 && argc != 4 ) {
-  //cout << "Usage: calibrationFitter config_file data_file [debug_file]\n";
-  //return(1);
-  //}
+  if ( argc != 3 && argc != 4 ) {
+    cout << "Usage: new_calibrationFitter config_file data_file [skip_cycles_front]\n";
+    return(1);
+  }
   
-  if ( argc == 4 ) debug.open(argv[3],ios::out | ios::trunc);
-  
+  //if ( argc == 4 ) debug.open(argv[3],ios::out | ios::trunc);
+  if ( argc == 4 ){
+    skip_cycles_front = atoi( argv[3] );
+    cout<< "I am skipping first events: " << skip_cycles_front << endl;
+  }
+  else skip_cycles_front = 0;
+
   // Read configuration
   if ( ! config.parseFile("config",argv[1]) ) {
     cout << "Failed to read configuration from " << argv[1] << endl;
@@ -387,6 +388,7 @@ int main ( int argc, char **argv ) {
   
   // Process each event
   while ( dataRead.next(&event) ) {
+    //if ( eventCount >= skip_cycles_front){
     
     // Get calibration state
     calState   = dataRead.getStatus("CalState");
@@ -455,7 +457,8 @@ int main ( int argc, char **argv ) {
 	
       }
     }
-    
+    //} // skip cycle ends
+
     // Show progress
     filePos  = dataRead.pos();
     currPct = (uint)(((double)filePos / (double)fileSize) * 100.0);
@@ -463,6 +466,7 @@ int main ( int argc, char **argv ) {
       cout << "\rReading File: " << currPct << " %      " << flush;
       lastPct = currPct;
     }
+    
     eventCount++;
   }
   cout << "\rReading File: Done.               " << endl;
@@ -501,11 +505,11 @@ int main ( int argc, char **argv ) {
   csv << endl;
   
   // Open noise/bad channel list files
-  channel_file_bad.open ("/home/kraemeru/afs/bin/channel_list_bad.txt");
-  channel_file_bad_fit.open ("/home/kraemeru/afs/bin/channel_list_bad_fit.txt");
-  channel_file_noise.open ("/home/kraemeru/afs/bin/channel_list_noise.txt");
-  channel_file_calib.open("/home/kraemeru/afs/bin/channel_list_calib.txt");
-  channel_file_adc_mean.open("/home/kraemeru/afs/bin/channel_adc_mean.txt");
+  channel_file_bad.open ("~/channel_list_bad.txt");
+  channel_file_bad_fit.open ("~/channel_list_bad_fit.txt");
+  channel_file_noise.open ("./channel_list_noise.txt");
+  channel_file_calib.open("~/channel_list_calib.txt");
+  channel_file_adc_mean.open("~/channel_adc_mean.txt");
   // Add notes
   xml << "   <sourceFile>" << argv[2] << "</sourceFile>" << endl;
   xml << "   <user>" <<  getlogin() << "</user>" << endl;
@@ -517,6 +521,9 @@ int main ( int argc, char **argv ) {
   xml << "   <config>"<< endl;
   xml << config.getXml();
   xml << "   </config>"<< endl;
+  
+  
+  
   
   // get calibration mode variables for charge computation
   positive    = (dataRead.getConfig("cntrlFpga:kpixAsic:CntrlPolarity") == "Positive");
@@ -530,6 +537,36 @@ int main ( int argc, char **argv ) {
   //////////////////////////////////////////
   
   // Process each kpix device
+  
+	rFile->cd(); // move into root folder base
+	FolderName.str("");
+	FolderName << "General";
+	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
+	TDirectory *General_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
+	General_folder->cd(); // move into subdirectory
+  
+	TH1F *summary1 = new TH1F("Pedestals_dac", "Pedestals [DAC]", 9000, 0, 9000);
+	TH1F *summary2 = new TH1F("Slope", "Slope [DAC/fC]", 200, -100, 100);
+	TH1F *summary3 = new TH1F("Intercept", "Intercept [DAC]", 2000, -1000, 1000);
+	TH1F *summary4 = new TH1F("Pedestals_fc", "Pedestals [fC]", 1000, -100, 100);
+	
+	TH1F *summary11 = new TH1F("PedestalsRMS", "Pedestal RMS", 200, 0, 20);
+	TH1F *summary111= new TH1F("PedestalRMS|AmplitudeCorrected", "Corrected Pedestal RMS", 200, 0, 0.1);
+	TH1F *summary12 = new TH1F("SlopeRMS", "Slope RMS", 1000, 0, 20);
+	TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
+	TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
+	
+	TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
+	
+	
+  
+	rFile->cd(); // move into root folder base
+	FolderName.str("");
+	FolderName << "Pedestals";
+	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
+	TDirectory *pedestal_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
+	pedestal_folder->cd(); // move into subdirectory
+	
   for (kpix=0; kpix<32; kpix++) {
     if ( kpixFound[kpix] ) {
       
@@ -626,7 +663,7 @@ int main ( int argc, char **argv ) {
 		      badMean[kpix][channel] = true;
 		      noiseSigmaCnt++;
 		      //cout << endl << "Noisy channel with " << "sigma = " << chanData[kpix][channel][bucket][range]->baseFitSigma << endl << endl;
-		      channel_file_noise << channel << endl;
+		     // channel_file_noise << channel << endl;
 		    }
 		    
 		    // Determine weird channels with only a single peak if fitted sigma is below the error of sigma
@@ -634,7 +671,7 @@ int main ( int argc, char **argv ) {
 		      badMean[kpix][channel] = true;
 		      errorSigmaCnt++;
 		      //cout << endl << "Sigma below error value with " << "sigma = " << chanData[kpix][channel][bucket][range]->baseFitSigma << endl << endl;
-		      channel_file_bad << channel << endl;
+		     // channel_file_bad << channel << endl;
 		    }
 		  }
 		  else if ( findBadMeanFit || findBadMeanChisq ) {
@@ -671,6 +708,13 @@ int main ( int argc, char **argv ) {
   //////////////////////////////////////////
   // Process Calibration
   //////////////////////////////////////////
+  
+  	rFile->cd(); // move into root folder base
+	FolderName.str("");
+	FolderName << "Calibration_and_Residuals";
+	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
+	TDirectory *calibration_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
+	calibration_folder->cd(); // move into subdirectory
   
   // Process each kpix device
   for (kpix=0; kpix<32; kpix++) {
@@ -797,7 +841,7 @@ int main ( int argc, char **argv ) {
 		    tmp << "_r" << dec << range;
 		    grCalib->SetTitle(tmp.str().c_str());
 		    grCalib->Write(tmp.str().c_str());
-		    channel_file_calib << channel << endl;
+		   // channel_file_calib << channel << endl;
 		    
 		    
 		    //create histogram that will have all the DAC measurement of all channels for a specific injected charge
@@ -858,11 +902,11 @@ int main ( int argc, char **argv ) {
 		      
 		      summary4->Fill( ped_charge * pow(10,15) );
 		      summary14->Fill( ped_charge_err * pow(10,15) );
-		      if (ped_charge_err * pow(10,15) > 1.0)
+		      if (ped_charge_err * pow(10,15) >= noise_cut)
 		      {
-				  cout << "Channel Numbers:" << endl << channel << endl;
+				  channel_file_noise << channel << endl ;
 			  }
-		      
+
 		      summary2->Fill( grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) );
 		      
 		      summary2_1->SetBinContent( channel+1, grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15));
@@ -884,7 +928,7 @@ int main ( int argc, char **argv ) {
 			badGain[kpix][channel] = true;
 			badGainFitCnt++;
 			//cout << endl << "Bad calibration fit " << "slope = " << grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) << endl << endl;
-			channel_file_bad_fit << channel << endl;
+			//channel_file_bad_fit << channel << endl;
 		      }
 		      
 		      // Determine bad channel from fitted chisq
@@ -989,6 +1033,9 @@ int main ( int argc, char **argv ) {
   
   xml << "</calibrationData>" << endl;
   xml.close();
+	rFile->Write();
+	gROOT->GetListOfFiles()->Remove(rFile); //delete cross links that make production of subfolder structure take forever
+	rFile->Close();
   delete rFile;
   cout << "EVENT COUNT: " << eventCount << endl;
   // Cleanup
@@ -1005,6 +1052,7 @@ int main ( int argc, char **argv ) {
   dataRead.close();
   channel_file_bad.close();
   channel_file_bad_fit.close();
+  cout << "Writing noisy channel numbers to: ./channel_list_noise.txt" << endl;
   channel_file_noise.close();
   channel_file_calib.close();
   channel_file_adc_mean.close();
