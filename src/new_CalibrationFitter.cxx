@@ -858,6 +858,10 @@ int main ( int argc, char **argv ) {
 		      
 		      summary4->Fill( ped_charge * pow(10,15) );
 		      summary14->Fill( ped_charge_err * pow(10,15) );
+		      if (ped_charge_err * pow(10,15) > 1.0)
+		      {
+				  cout << "Channel Numbers:" << endl << channel << endl;
+			  }
 		      
 		      summary2->Fill( grCalib->GetFunction("pol1")->GetParameter(1) / pow(10,15) );
 		      
