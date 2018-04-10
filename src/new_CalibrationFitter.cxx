@@ -35,6 +35,8 @@
 #include <math.h>
 #include <fstream>
 #include <XmlVariables.h>
+#include "kpix_left.h"
+
 using namespace std;
 
 // Channel data
@@ -296,6 +298,11 @@ int main ( int argc, char **argv ) {
   uint 					noise_cut = 1.0;
 
   bool                    printalot=false;
+
+ unordered_map<uint, uint> kpix2strip;
+ kpix2strip = kpix_left();
+
+
   
   // Init structure
   for (kpix=0; kpix < 32; kpix++) {
@@ -994,6 +1001,8 @@ int main ( int argc, char **argv ) {
 		      Pedestals_fc3->Fill( ped_charge3 * pow(10,15) );
 
 		      PedestalsRMS_fc0->Fill( ped_charge_err0 * pow(10,15) );
+		      if ( kpix2strip.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err0 * pow(10,15) );
+		      else PedestalsRMS_fc0_conn->Fill( ped_charge_err0 * pow(10,15) );
 		      
 		      PedestalsRMS_fc2->Fill( ped_charge_err2 * pow(10,15) );
 		      PedestalsRMS_fc3->Fill( ped_charge_err3 * pow(10,15) );
