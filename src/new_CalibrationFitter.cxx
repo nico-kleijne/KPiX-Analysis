@@ -242,8 +242,8 @@ int main ( int argc, char **argv ) {
   uint                   injectTime[5];
   uint                   eventCount;
   uint                   eventProcessed; // eventCount - skipped_cycles
-  uint                   nevtPed;
-  uint                   nevtCalib;
+  uint                   Baseline_eventCount;
+  uint                   Inject_eventCount;
   
   uint                   skip_cycles_front;
   FILE*                  f_skipped_cycles;
@@ -401,8 +401,8 @@ int main ( int argc, char **argv ) {
   lastPct          	= 100;
   eventCount       	= 0;
   eventProcessed        = 0;
-  nevtCalib             = 0;
-  nevtPed               = 0;
+  Inject_eventCount     = 0;
+  Baseline_eventCount   = 0;
   minChan          	= 0;
   maxChan          	= 0;
   badTimes         	= 0;
@@ -494,13 +494,11 @@ int main ( int argc, char **argv ) {
 	  //cout << "Inject time of Bucket " << bucket+1 << " = " << injectTime[bucket+1] << endl << endl;
 	  // Baseline
 	  if ( calState == "Baseline" ) {
-	    nevtPed++;
 	    chanData[kpix][channel][bucket][range]->addBasePoint(value);
 	  }
 	  
 	  // Injection
 	  else if ( calState == "Inject" && calDac != minDac ) {
-	    nevtCalib++;
 	    if ( channel == calChannel ) chanData[kpix][channel][bucket][range]->addCalibPoint(calDac, value);
 	    else{
 	      if ( chanData[kpix][calChannel][bucket][range] != NULL )
@@ -537,6 +535,9 @@ int main ( int argc, char **argv ) {
     }
     
     eventCount++;
+    if (calState=="Baseline") 	    Baseline_eventCount++;
+    if (calState == "Inject")       Inject_eventCount++;
+    
   }
   cout << "\rReading File: Done.               " << endl;
   
@@ -1187,8 +1188,8 @@ int main ( int argc, char **argv ) {
 	rFile->Close();
   delete rFile;
   cout << " - EVENT COUNT: " << eventCount
-       << "\n - Pedestal Evts =  " << nevtPed
-       << "\n - Calib Evts = " << nevtCalib
+       << "\n - Pedestal Evts =  " << Baseline_eventCount
+       << "\n - Calib Evts = " << Inject_eventCount
        << endl;
   
   // Cleanup
