@@ -241,11 +241,14 @@ int main ( int argc, char **argv ) {
   bool                   b0CalibHigh;
   uint                   injectTime[5];
   uint                   eventCount;
+  uint                   eventProcessed; // eventCount - skipped_cycles
   uint                   nevtPed;
   uint                   nevtCalib;
   
   uint                   skip_cycles_front;
-
+  FILE*                  f_skipped_cycles;
+  string                 outtxt;
+  
   string                 outRoot;
   string                 outXml;
   string                 outCsv;
@@ -301,8 +304,6 @@ int main ( int argc, char **argv ) {
 
  unordered_map<uint, uint> kpix2strip;
  kpix2strip = kpix_left();
-
-
   
   // Init structure
   for (kpix=0; kpix < 32; kpix++) {
@@ -328,9 +329,13 @@ int main ( int argc, char **argv ) {
   if ( argc == 4 ){
     skip_cycles_front = atoi( argv[3] );
     cout<< " -- I am skipping first events: " << skip_cycles_front << endl;
+    tmp.str("");
+    tmp << argv[2] << ".printSkipped.txt";
+    outtxt = tmp.str();
+    f_skipped_cycles = fopen(outtxt.c_str(), "w");
   }
   else skip_cycles_front = 0;
-
+  
   // Read configuration
   if ( ! config.parseFile("config",argv[1]) ) {
     cout << "Failed to read configuration from " << argv[1] << endl;
@@ -395,6 +400,7 @@ int main ( int argc, char **argv ) {
   currPct          	= 0;
   lastPct          	= 100;
   eventCount       	= 0;
+  eventProcessed        = 0;
   nevtCalib             = 0;
   nevtPed               = 0;
   minChan          	= 0;
@@ -412,18 +418,37 @@ int main ( int argc, char **argv ) {
   errorSigmaCnt		= 0;
   cout << "\rReading File: 0 %" << flush;
   goodTimes       	= 0;
+
+  // start - work in progress - wmq - Apr 11 2018
+  /* KpixEvent etest;
+  for (int it = 0; it<10; it++){
+    dataRead.next(&etest);
+    auto byte = etest.count();
+    auto itrn = etest.eventNumber();
+    printf(" index = %d , byte = %6d, train = %6d\n ", it, byte, itrn);
+
+  }
+  dataRead.close();
+  dataRead.open(argv[2]);*/
+  // end - work in progress - wmq - Apr 11 2018
   
   // Process each event
   while ( dataRead.next(&event) ) {
-    //if ( eventCount >= skip_cycles_front){
+    
     
     // Get calibration state
     calState   = dataRead.getStatus("CalState");
     calChannel = dataRead.getStatusInt("CalChannel");
     calDac     = dataRead.getStatusInt("CalDac");
-    
+
     // Get injection times
-    if ( eventCount == 0 ) {
+    /* 
+     * 2018-04-11 by mengqing
+     * - to check: if skipping event, should we get injection times from 1) #0 event 2) or 1st event to use?
+     * - now using info from #0 evt;
+     * - optional: if you want the alternative: change eventCount to eventProcessed
+     */
+    if ( eventCount == 0 ) { 
       minDac        = dataRead.getConfigInt("CalDacMin");
       minChan       = dataRead.getConfigInt("CalChanMin");
       maxChan       = dataRead.getConfigInt("CalChanMax");
@@ -433,6 +458,8 @@ int main ( int argc, char **argv ) {
       injectTime[3] = dataRead.getConfigInt("cntrlFpga:kpixAsic:Cal3Delay") + injectTime[2] + 4;
       injectTime[4] = 8192;
     }
+
+    if ( eventCount >= skip_cycles_front){
     
     // get each sample
     for (x=0; x < event.count(); x++) {
@@ -491,8 +518,16 @@ int main ( int argc, char **argv ) {
 	
       }
     }
-    //} // skip cycle ends
-
+    eventProcessed++;
+    } // skip cycle ends
+    else {
+      auto byte = event.count();
+      auto train = event.eventNumber();
+      if (f_skipped_cycles!=NULL)
+	fprintf(f_skipped_cycles, " index = %d , byte = %6d, train = %6d, CalState = %s\n ", eventCount, byte, train, calState.c_str());
+      
+    }
+    
     // Show progress
     filePos  = dataRead.pos();
     currPct = (uint)(((double)filePos / (double)fileSize) * 100.0);
@@ -505,6 +540,12 @@ int main ( int argc, char **argv ) {
   }
   cout << "\rReading File: Done.               " << endl;
   
+  if (f_skipped_cycles!=NULL)  {
+    fclose( f_skipped_cycles);
+    cout << endl;
+    cout << "Wrote skipped cycles to " << outtxt << endl;
+    cout << endl;
+  }
   //////////////////////////////////////////
   // Process Data
   //////////////////////////////////////////
@@ -653,7 +694,7 @@ int main ( int argc, char **argv ) {
 				  8192,0,8192);
 		  
 		  //double num_of_entries; //ADDED
-		  double normed_bin_content;
+		  //double normed_bin_content;
 		  // Fill histogram
 		  //for (x=0; x < 8192; x++) num_of_entries += chanData[kpix][channel][bucket][range]->baseData[x]; //ADDED
 		  //cout << num_of_entries << endl;
