@@ -636,8 +636,11 @@ int main ( int argc, char **argv ) {
 
 	TH1F *PedestalsRMS_fc0 = new TH1F("PedestalsRMS_fc0", "Pedestals RMS, All Chn; [fC]; a.u.", 1000, 0, 2);
 	TH1F *PedestalsRMS_fc0_disc = new TH1F("PedestalsRMS_fc0_disc", "Pedestals RMS, disc. Chn; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_conn = new TH1F("PedestalsRMS_fc0_conn", "Pedestals RMS, conn. Chn; [fC]; a.u.", 1000, 0, 2);
 	
+	TH1F *PedestalsRMS_fc0_conn = new TH1F("PedestalsRMS_fc0_conn", "Pedestals RMS, conn. Chn; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0_conn_120 = new TH1F("PedestalsRMS_fc0_conn_120", "Pedestals RMS, conn. Chn in 0-128; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0_conn_800 = new TH1F("PedestalsRMS_fc0_conn_800", "Pedestals RMS, conn. Chn after 128; [fC]; a.u.", 1000, 0, 2);
+		
 	TH1F *PedestalsRMS_fc2 = new TH1F("PedestalsRMS_fc2", "Pedestals RMS [fC]", 1000, 0, 10);
 	TH1F *PedestalsRMS_fc3 = new TH1F("PedestalsRMS_fc3", "Pedestals RMS [fC]", 1000, 0, 10);
 	
@@ -1044,7 +1047,12 @@ int main ( int argc, char **argv ) {
 
 		      PedestalsRMS_fc0->Fill( ped_charge_err0 * pow(10,15) );
 		      if ( kpix2strip.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err0 * pow(10,15) );
-		      else PedestalsRMS_fc0_conn->Fill( ped_charge_err0 * pow(10,15) );
+		      else{
+			if (channel < 128) PedestalsRMS_fc0_conn_120 -> Fill(ped_charge_err0 * pow(10,15));
+			else PedestalsRMS_fc0_conn_800 -> Fill(ped_charge_err0 * pow(10,15));
+			
+			PedestalsRMS_fc0_conn->Fill( ped_charge_err0 * pow(10,15) );
+		      }
 		      
 		      PedestalsRMS_fc2->Fill( ped_charge_err2 * pow(10,15) );
 		      PedestalsRMS_fc3->Fill( ped_charge_err3 * pow(10,15) );

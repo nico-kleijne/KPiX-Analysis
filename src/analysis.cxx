@@ -311,7 +311,7 @@ for (int cycles = 0; cycles < 1000; cycles++) // produce subfolders per cycle
 	cycles_folder->cd();
 	tmp.str("");
 	tmp << "time_distribution_external" << "_evt_" << cycles;
-	cycle_time_ext[cycles] = new TH1F(tmp.str().c_str(), "time_distribution_external; time/BunchClkCount; #entries/#acq.cycles", 8192, -0.5, 8191.5);
+	cycle_time_ext[cycles] = new TH1F(tmp.str().c_str(), "time_distribution_external; time [#bunch_clk_count]; #entries/#acq.cycles", 8192, -0.5, 8191.5);
 }
 
 while ( dataRead.next(&event) ) // event read to check for filled channels and kpix to reduce number of empty histograms.
@@ -397,13 +397,13 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 
 		tmp.str("");
 		tmp << "timestamp_kpix_k_" << kpix  << "_total";
-		times_kpix[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
+		times_kpix[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
 		tmp.str("");
 		tmp << "timestamp_kpix_k_" << kpix  << "_monster_total";
-		times_kpix_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
+		times_kpix_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
 		tmp.str("");
 		tmp << "timestamp_kpix_k_" << kpix  << "_no_monster_total";
-		times_kpix_no_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
+		times_kpix_no_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
 		tmp.str("");
 		tmp << "trig_count_k" << kpix << "_total";
 		trig_count[kpix][4]  = new TH1F (tmp.str().c_str(), "trig_count;  #triggered channels; #entries/#acq.cycles",1024, -0.5, 1023.5);
@@ -439,16 +439,16 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 			channel_entries_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel Entries; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
 			tmp.str("");
 			tmp << "timestamp_kpix_k_" << kpix << "_b" << bucket;
-			times_kpix[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
+			times_kpix[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
 			tmp.str("");
 			tmp << "timestamp_kpix_monster_k_" << kpix << "_b" << bucket;
-			times_kpix_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
+			times_kpix_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
 			tmp.str("");
 			tmp << "trig_count_k" << kpix << "_b" << bucket ;
 			trig_count[kpix][bucket]  = new TH1F(tmp.str().c_str(), "trig_count;  #triggered channels; #entries/#acq.cycles",1024, -0.5,1023.5);
 			tmp.str("");
 			tmp << "timestamp_kpix_k_" << kpix << "_b" << bucket << "_no_monster";
-			times_kpix_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time/#bunch_clk_count; #entries/#acq.cycles", 300,-0.5, 8191.5);
+			times_kpix_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
 		}
 		FolderName.str("");
 		FolderName << "cycles";
@@ -464,13 +464,13 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 			cycles_folder->cd();
 			tmp.str("");
 			tmp << "time_distribution_k_" << kpix << "_evt_" << cycles;
-			cycle_time[kpix][cycles] = new TH1F(tmp.str().c_str(), "time_distribution; time/BunchClkCount; #entries", 8192, -0.5, 8191.5);
+			cycle_time[kpix][cycles] = new TH1F(tmp.str().c_str(), "time_distribution; time [#bunch_clk_count]; #entries", 8192, -0.5, 8191.5);
 			tmp.str("");
 			tmp << "assigned_channels_k" << kpix << "_evt_" << cycles;
 			AssignedChannelHist[kpix][cycles]  = new TH1F (tmp.str().c_str(), "assigned_channels_per_ext_trig;  external_trigger_number; #assigned_channels ",100, -0.5, 99.5);
 			tmp.str("");
 			tmp << "trigger_difference_k" << kpix << "_evt_" << cycles;
-			trigger_difference_per_acq[kpix][cycles]  = new TH1F (tmp.str().c_str(), "trigger_difference;  #entries/#acq.cycles; #Delta T (BunchClkCount) ",16384, -8192.5, 8191.5);
+			trigger_difference_per_acq[kpix][cycles]  = new TH1F (tmp.str().c_str(), "trigger_difference;  #entries/#acq.cycles; #Delta T [BunchClkCount] ",16384, -8192.5, 8191.5);
 			//tmp.str("");
 			//tmp << "assigned_number_k" << kpix << "_evt_" << cycles;
 			//AssignedNumberHist[kpix][cycles]  = new TH1F (tmp.str().c_str(), "assigned_NumberOfChannel_per_ext_trig;  #same_assignement; #entries/#acq.cycles",40,0,40);
