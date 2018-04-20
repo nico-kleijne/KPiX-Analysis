@@ -277,6 +277,12 @@ TH1F *channel_entries_total_timed= new TH1F("Channel_entries_total_timed", "Chan
 
 
 TH1F *time_kpix= new TH1F("time_kpix", "time_kpix; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
+ TH1F *time_kpix_b[3];
+ time_kpix_b[0]= new TH1F("time_kpix_b0", "time_kpix_b0; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
+ time_kpix_b[1]= new TH1F("time_kpix_b1", "time_kpix_b1; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
+ time_kpix_b[2]= new TH1F("time_kpix_b2", "time_kpix_b2; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
+ time_kpix_b[3]= new TH1F("time_kpix_b3", "time_kpix_b3; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8191.5);
+ 
 TH1F *time_external= new TH1F("time external", "time external; Time/bunchClkCount; #entries/#acq.cycles", 300, -0.5, 8192.5); // one higher because the accuracy is higher
 
 
@@ -708,7 +714,8 @@ while ( dataRead.next(&event) )
 		  timestamp[kpix].push_back(tstamp);
 		  adc_value[kpix].push_back(value);
 		  time_kpix->Fill(tstamp, weight);
-		  
+		  time_kpix_b[bucket]->Fill(tstamp, weight);
+		    
 		  std::vector<double> trig_diff_list;
 		  trig_diff_list.push_back(1);
 		  trig_diff_list.push_back(5);
