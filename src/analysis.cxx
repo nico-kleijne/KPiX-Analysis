@@ -102,6 +102,11 @@ off_t                  filePos;   //
 KpixEvent              event;    //
 KpixSample             *sample;   //
 
+// cycles to skip in front:
+ uint                   skip_cycles_front;
+ FILE*                  f_skipped_cycles;
+ string                 outtxt;
+ 
 string                 calState;
 uint                   lastPct;
 uint                   currPct;
@@ -151,7 +156,8 @@ stringstream			FolderName;
 
 ofstream               xml;
 ofstream               csv;
-uint                   acquisitionCount;
+ uint                   acqCount; // acquisitionCount
+ uint                   acqProcessed;
 string                 outRoot;
 TFile                  *rFile;
 stringstream           crossString;
@@ -190,17 +196,22 @@ std::vector<int> monster_channels;
 //}
 
 // Data file is the first and only arg
-if ( argc != 2 ) {
-  cout << "Usage: ./analysis data_file \n";
+if ( argc != 2 && argc!= 3) {
+  cout << "Usage: ./analysis data_file [skip_cycles_front] \n";
   return(1);
 }
 
 
-// Read configuration
-//if ( ! config.parseFile("config",argv[1]) ) {
-	//cout << "Failed to read configuration from " << argv[1] << endl;
-	//return(1);
-//}
+// skip first few cycles:
+if ( argc == 3 ) {
+  skip_cycles_front = atoi( argv[2] );
+  cout<< " -- I am skipping first events: " << skip_cycles_front << endl;
+  tmp.str("");
+  tmp << argv[1] << ".printSkipped.txt";
+  outtxt = tmp.str();
+  f_skipped_cycles = fopen(outtxt.c_str(), "w");
+ }
+ else skip_cycles_front = 0;
 
 
 //////////////////////////////////////////
@@ -320,35 +331,53 @@ for (int cycles = 0; cycles < 1000; cycles++) // produce subfolders per cycle
 	cycle_time_ext[cycles] = new TH1F(tmp.str().c_str(), "time_distribution_external; time [#bunch_clk_count]; #entries/#acq.cycles", 8192, -0.5, 8191.5);
 }
 
-while ( dataRead.next(&event) ) // event read to check for filled channels and kpix to reduce number of empty histograms.
-{
-	acquisitionCount++;
-	//if ( acquisitionCount < 10)
-	//{
-		//cout << "DEBUG: EVENTNUMBER " << event.eventNumber() << endl;
-	//}
-	for (x=0; x < event.count(); x++)
-	{
+ while ( dataRead.next(&event) ) // event read to check for filled channels and kpix to reduce number of empty histograms.
+   {
+     acqCount++;
+     //if ( acqCount < 10)
+     //{
+     //cout << "DEBUG: EVENTNUMBER " << event.eventNumber() << endl;
+     //}
+     if (acqCount > skip_cycles_front){
+       acqProcessed++;
+       for (x=0; x < event.count(); x++)
+	 {
+	   
+	   //// Get sample
+	   sample  = event.sample(x);
+	   kpix    = sample->getKpixAddress();
+	   channel = sample->getKpixChannel();
+	   bucket  = sample->getKpixBucket();
+	   type    = sample->getSampleType();
+	   if ( type == KpixSample::Data )
+	     {
+	       kpixFound[kpix]          = true;
+	       chanFound[kpix][channel] = true;
+	       bucketFound[kpix][channel][bucket] = true;
+	     }
+	   //cout << "KPIX: " << kpix << endl;
+	   //cout << "Channel: " << channel << endl;
+	   kpixFound[0] = false; // for some reason the system finds a kpix in slot 0
+	 }
+     }
+     else {
+       auto byte = event.count();
+       auto train = event.eventNumber();
+       if (f_skipped_cycles!=NULL)
+	 fprintf(f_skipped_cycles, " index = %d , byte = %6d, train = %6d \n ", acqCount, byte, train);
+       
+     }
+   }
 
-		//// Get sample
-		sample  = event.sample(x);
-		kpix    = sample->getKpixAddress();
-		channel = sample->getKpixChannel();
-		bucket  = sample->getKpixBucket();
-		type    = sample->getSampleType();
-		if ( type == KpixSample::Data )
-		{
-			kpixFound[kpix]          = true;
-			chanFound[kpix][channel] = true;
-			bucketFound[kpix][channel][bucket] = true;
-		}
-		//cout << "KPIX: " << kpix << endl;
-		//cout << "Channel: " << channel << endl;
-		kpixFound[0] = false; // for some reason the system finds a kpix in slot 0
-	}
-}
-dataRead.close();
-range = 0;
+ if (f_skipped_cycles!=NULL)  {
+    fclose( f_skipped_cycles);
+    cout << endl;
+    cout << "Wrote skipped cycles to " << outtxt << endl;
+    cout << endl;
+  }
+
+ dataRead.close();
+ range = 0;
 //for (int u = 0; u<32; ++u)
 //{
 	//if (kpixFound[u])
@@ -364,7 +393,8 @@ range = 0;
 //}
 
 
-double weight = 1.0/acquisitionCount; //normalization weight  #entries*weight = #entries/acq.cycle
+//double weight = 1.0/acqCount; //normalization weight  #entries*weight = #entries/acq.cycle
+ double weight = 1.0/acqProcessed;
 int monster_counter[32] = {0}; // kpix monster counter
 
 
@@ -586,76 +616,77 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 // Data read for first 1000 events for detailed look into single event structure
 //////////////////////////////////////////
 dataRead.open(argv[1]); //open binary file
-int cycle_num = 0;
+uint cycle_num = 0;
 int cycle_num_ext = -1;
-while ( dataRead.next(&event) ) //loop through binary file event structure until end of file
-{
-
-	double 	trigger_counter[32] = {0}; // fill the entire list of trigger_counter with 0
-	
-	for (x=0; x < event.count(); x++)  //within the binary file go through each event
-	{
-		//// Get sample
-		sample  = event.sample(x);  // check event subtructure
-		kpix    = sample->getKpixAddress();
-		channel = sample->getKpixChannel();
-		bucket  = sample->getKpixBucket();
-		value   = sample->getSampleValue();
-		type    = sample->getSampleType();
-		tstamp  = sample->getSampleTime();
-		range   = sample->getSampleRange();
-		if (type == 2) //if type of event is ==2, the event is of type external timestamp
-		{
-			//cout << cycle_num << endl;
-			//cout << cycle_num_ext << endl;
-			if (x == 0) cycle_num_ext++;
-			double time = tstamp + double(value * 0.125);
-			if (cycle_num_ext < 1000)
-			{
-				//cout << cycle_num_ext <<  " " << time << endl;
-				cycle_time_ext[cycle_num_ext]->Fill(time);
-			}
-		}
-		if ( type == KpixSample::Data ) // If event is of type KPiX data
-		{
-			channel_entries[kpix][bucket]->Fill(channel, weight);
-			channel_entries[kpix][4]->Fill(channel, weight);
-
-			strip_entries[kpix][bucket]->Fill(kpix2strip.at(channel), weight);
-			strip_entries[kpix][4]->Fill(kpix2strip.at(channel), weight);
-
-			times_kpix[kpix][bucket]->Fill(tstamp, weight);
-			times_kpix[kpix][4]->Fill(tstamp, weight);
-			trigger_counter[kpix] = trigger_counter[kpix] + (1.0/num_of_channels[kpix]);
-			if (kpix2strip.at(channel) == 9999)
-			{
-				channel_entries_no_strip[kpix][bucket]->Fill(channel,weight);
-				channel_entries_no_strip[kpix][4]->Fill(channel,weight);
-			}
-			if (event.count() > 700)
-			{
-				times_kpix_monster[kpix][bucket]->Fill(tstamp, weight);
-				times_kpix_monster[kpix][4]->Fill(tstamp, weight);
-			}
-			else
-			{
-				channel_entries_no_monster[kpix][bucket]->Fill(channel, weight);
-				channel_entries_no_monster[kpix][4]->Fill(channel, weight);
-				times_kpix_no_monster[kpix][bucket]->Fill(tstamp, weight);
-				times_kpix_no_monster[kpix][4]->Fill(tstamp, weight);
-			}
-			if (cycle_num < 1000)
-			{
-				 cycle_time[kpix][cycle_num]->Fill(tstamp);
-			 }
-		}
-	}
-	cycle_num++;
-	//if (trigger_counter[26] > 4) cout << trigger_counter[26] << endl;
-	if (kpixFound[26]) acq_num_ext[26]->Fill(trigger_counter[26]); // trigger counting for monster check
-	if (kpixFound[28]) acq_num_ext[28]->Fill(trigger_counter[28]);
-	if (kpixFound[30]) acq_num_ext[30]->Fill(trigger_counter[30]);
-}
+ while ( dataRead.next(&event) ) //loop through binary file event structure until end of file
+   {
+     cycle_num++;
+     if ( cycle_num > skip_cycles_front){
+       double 	trigger_counter[32] = {0}; // fill the entire list of trigger_counter with 0
+       
+       for (x=0; x < event.count(); x++)  //within the binary file go through each event
+	 {
+	   //// Get sample
+	   sample  = event.sample(x);  // check event subtructure
+	   kpix    = sample->getKpixAddress();
+	   channel = sample->getKpixChannel();
+	   bucket  = sample->getKpixBucket();
+	   value   = sample->getSampleValue();
+	   type    = sample->getSampleType();
+	   tstamp  = sample->getSampleTime();
+	   range   = sample->getSampleRange();
+	   if (type == 2) //if type of event is ==2, the event is of type external timestamp
+	     {
+	       //cout << cycle_num << endl;
+	       //cout << cycle_num_ext << endl;
+	       if (x == 0) cycle_num_ext++;
+	       double time = tstamp + double(value * 0.125);
+	       if (cycle_num_ext < 1000) {
+		 //cout << cycle_num_ext <<  " " << time << endl;
+		 cycle_time_ext[cycle_num_ext]->Fill(time);
+	       }
+	     }
+	   if ( type == KpixSample::Data ) // If event is of type KPiX data
+	     {
+	       channel_entries[kpix][bucket]->Fill(channel, weight);
+	       channel_entries[kpix][4]->Fill(channel, weight);
+	       
+	       strip_entries[kpix][bucket]->Fill(kpix2strip.at(channel), weight);
+	       strip_entries[kpix][4]->Fill(kpix2strip.at(channel), weight);
+	       
+	       times_kpix[kpix][bucket]->Fill(tstamp, weight);
+	       times_kpix[kpix][4]->Fill(tstamp, weight);
+	       trigger_counter[kpix] = trigger_counter[kpix] + (1.0/num_of_channels[kpix]);
+	       if (kpix2strip.at(channel) == 9999)
+		 {
+		   channel_entries_no_strip[kpix][bucket]->Fill(channel,weight);
+		   channel_entries_no_strip[kpix][4]->Fill(channel,weight);
+		 }
+	       if (event.count() > 700)
+		 {
+		   times_kpix_monster[kpix][bucket]->Fill(tstamp, weight);
+		   times_kpix_monster[kpix][4]->Fill(tstamp, weight);
+		 }
+	       else
+		 {
+		   channel_entries_no_monster[kpix][bucket]->Fill(channel, weight);
+		   channel_entries_no_monster[kpix][4]->Fill(channel, weight);
+		   times_kpix_no_monster[kpix][bucket]->Fill(tstamp, weight);
+		   times_kpix_no_monster[kpix][4]->Fill(tstamp, weight);
+		 }
+	       if (cycle_num < 1000)
+		 {
+		   cycle_time[kpix][cycle_num]->Fill(tstamp);
+		 }
+	     }
+	 }
+       
+       //if (trigger_counter[26] > 4) cout << trigger_counter[26] << endl;
+       if (kpixFound[26]) acq_num_ext[26]->Fill(trigger_counter[26]); // trigger counting for monster check
+       if (kpixFound[28]) acq_num_ext[28]->Fill(trigger_counter[28]);
+       if (kpixFound[30]) acq_num_ext[30]->Fill(trigger_counter[30]);
+     }
+   }
 dataRead.close(); // close file as we have looped through it and are now at the end
 dataRead.open(argv[1]); //open file again to start from the beginning
 
@@ -669,6 +700,8 @@ cycle_num = 0;
 
 while ( dataRead.next(&event) )
 {
+  cycle_num++;
+  if ( cycle_num > skip_cycles_front){
 	std::vector<double> time_ext;
 	std::vector<int> channel_hits[32];
 	std::vector<int> timestamp[32];
@@ -678,7 +711,7 @@ while ( dataRead.next(&event) )
 	
 	//std::vector<int> Assignment_number;
 	int num_trig_count[32][5] = {0};
-	  
+
 	//cout << " NEW EVENT " << endl;
 	for (x=0; x < event.count(); x++)
 	{
@@ -839,16 +872,15 @@ while ( dataRead.next(&event) )
 	//////////////////////////////////////////
 	
 	extern_trigger_id=extern_trigger_id+time_ext.size();  // Counting which global external trigger was matched to a channel
-	
+  }	
 	////   Show progress
-	cycle_num++;
 	filePos  = dataRead.pos();
 	currPct = (uint)(((double)filePos / (double)fileSize) * 100.0);
 	if ( currPct != lastPct ) {
 	  cout << "\rReading File: " << currPct << " %      " << flush;
 	  lastPct = currPct;
 	}
-	
+ 
  }
 
  cout << "Full coincidence of sensors with external trigger: " << full_coincidence_channel_entries->GetEntries() << endl;
