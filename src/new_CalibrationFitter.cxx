@@ -632,7 +632,8 @@ int main ( int argc, char **argv ) {
 	TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
 	TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
 	
-	TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slop [DAC/fC]", 1024, -0.5, 1023.5);
+	TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slope [DAC/fC]", 1024, -0.5, 1023.5);
+	TH1F *RMSfc_v_channel = new TH1F("RMSfc_vs_channel", "; Channel ID; RMS [fC]", 1024, -0.5, 1023.5);
 
 	TH1F *PedestalsRMS_fc0 = new TH1F("PedestalsRMS_fc0", "Pedestals RMS, All Chn; [fC]; a.u.", 1000, 0, 2);
 	TH1F *PedestalsRMS_fc0_disc = new TH1F("PedestalsRMS_fc0_disc", "Pedestals RMS, disc. Chn; [fC]; a.u.", 1000, 0, 2);
@@ -1044,7 +1045,6 @@ int main ( int argc, char **argv ) {
 		      
 		      Pedestals_fc2->Fill( ped_charge2 * pow(10,15) );
 		      Pedestals_fc3->Fill( ped_charge3 * pow(10,15) );
-
 		      PedestalsRMS_fc0->Fill( ped_charge_err0 * pow(10,15) );
 		      if ( kpix2strip.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err0 * pow(10,15) );
 		      else{
@@ -1065,6 +1065,7 @@ int main ( int argc, char **argv ) {
 		      summary2->Fill( slope / pow(10,15) );
 		      
 		      summary2_1->SetBinContent( channel+1, slope / pow(10,15));
+		      if (abs(ped_charge_err0 * pow(10,15)) < 20) RMSfc_v_channel->SetBinContent(channel, ped_charge_err0 * pow(10,15));
 		      //summary2_1->Fill( channel, slope / pow(10,15) );
 		      
 		      summary3->Fill( offset);
@@ -1144,6 +1145,7 @@ int main ( int argc, char **argv ) {
   }
   summary2->Write();
   summary2_1->Write();
+  RMSfc_v_channel->Write();
   summary3->Write();
   summary4->Write();
   summary12->Write();

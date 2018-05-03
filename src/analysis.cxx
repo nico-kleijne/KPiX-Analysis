@@ -43,6 +43,7 @@
 #include <fstream>
 #include <XmlVariables.h>
 #include <string.h>
+#include <algorithm>
 
 #include "kpixmap.h"
 #include "kpix_left.h"
@@ -54,6 +55,10 @@ using namespace std;
 //////////////////////////////////////////
 
 // Coincidence function void coincidence(int* time_list1, int* time_list2, int* time_list3, int* channel_list1, int* channel_list2, int* channel_list3)
+
+
+
+
 
 bool gtx_ltz ( int x, int y, int z) // simple function asking if x<y<z
 {
@@ -81,6 +86,8 @@ for (x=0; x < indent; x++) *xml << " ";
 *xml << "</" << variable << ">";
 *xml << endl;
 }
+
+
 
 
 //////////////////////////////////////////
@@ -137,7 +144,7 @@ TH1F					*times_kpix[32][5];
 TH1F					*times_kpix_monster[32][5];
 TH1F					*times_kpix_no_monster[32][5];
 TH1F					*trig_count[32][5];
-TH1F                   	                *hist_buck_sum[32][1024];
+TH1F                    *hist_buck_sum[32][1024];
 
 
 // Stringstream initialization for histogram naming
@@ -180,15 +187,13 @@ pixel_mapping(pixel_kpix);
 
 int 					num_of_channels[32] = {0};
 TH1F*					acq_num_ext[32];
-TH1F* 					AssignedChannelHist[32][1000];
+
 TH1F* 					AssignedChannelHist_Total[32];
-TH1F* 					trigger_difference_per_acq[32][1000];
-//TH1F* 					AssignedNumberHist[32][1000];
-TH1F*					cycle_time[32][1000];
-TH1F*					cycle_time_ext[1000];
-std::vector<int> monster_channels;
+std::vector<int>        monster_channels;
 
 
+int                     monster_finder_limit = 100;
+std::vector<int>        monster_cycles;
 
 //for (int i = 0; i < 1000; i++)
 //{
@@ -312,14 +317,90 @@ TH1F *ExtTrigPerCycle = new TH1F ("external_triggers_per_cycle", "ext_trig_per_a
 
 //TH1F *three_coincidence_channel_entries= new TH1F("three_coincidence_channel_entries", "three_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
 TH1F *full_coincidence_channel_entries= new TH1F("full_coincidence_channel_entries", "full_coincidence_channel_entries; KPiX_channel_address; #entries/#acq.cycles", 1024, -0.5, 1023.5);
+
+
+
+
+while ( dataRead.next(&event) ) // event read to check for filled channels and kpix to reduce number of empty histograms.
+{
+     acqCount++;
+     //cout << "Event size " << event.size() << endl;
+     //cout << "Event count " << event.count() << endl;
+     //cout << "Timestamp of Event #" << event.eventNumber() << " = " << event.timestamp() << endl;
+     //cout << "Timestamp of Event #" << acqCount << " = " << event.timestamp() << endl;
+     
+     int cycle_time_local[8192] = {0}; //list that is part of improved monster finder
+     //if ( acqCount < 10)
+     //{
+     //cout << "DEBUG: EVENTNUMBER " << event.eventNumber() << endl;
+     //}
+     if (acqCount > skip_cycles_front)
+     {
+		acqProcessed++;
+		for (x=0; x < event.count(); x++)
+		{
+	   
+			//// Get sample
+			sample  = event.sample(x);
+			kpix    = sample->getKpixAddress();
+			tstamp    = sample->getSampleTime();
+			channel = sample->getKpixChannel();
+			bucket  = sample->getKpixBucket();
+			type    = sample->getSampleType();
+			if ( type == KpixSample::Data )
+			{
+				kpixFound[kpix]          = true;
+				chanFound[kpix][channel] = true;
+				bucketFound[kpix][channel][bucket] = true;
+				cycle_time_local[int(tstamp)]+=1;
+				
+			}
+			//cout << "KPIX: " << kpix << endl;
+			//cout << "Channel: " << channel << endl;
+			kpixFound[0] = false; // for some reason the system finds a kpix in slot 0
+		}
+     }
+     else 
+     {
+		auto byte = event.count();
+		auto train = event.eventNumber();
+		if (f_skipped_cycles!=NULL)
+		fprintf(f_skipped_cycles, " index = %d , byte = %6d, train = %6d \n ", acqCount, byte, train);
+       
+	}
+	for (int i = 0; i < 8192; ++i)
+	{
+		if (cycle_time_local[i] > monster_finder_limit) 
+		{
+			cout << " There is a monster with #" << monster_finder_limit << " eyes under bed #" << acqCount << endl;
+			monster_cycles.push_back(acqCount); // if among the 8192 possible time points there exists one that has more than monster_finder_limit triggers the event is classified as a monster
+		}
+	}
+	
+}
+
+ if (f_skipped_cycles!=NULL)  {
+    fclose( f_skipped_cycles);
+    cout << endl;
+    cout << "Wrote skipped cycles to " << outtxt << endl;
+    cout << endl;
+  }
+range = 0;
+
+
+uint cycle_checking;  // Program crashes when more than ~1700 cycles are checked maybe a memory issues, therefore the checking will have a maximum of 1000
+if (acqCount < 1000) cycle_checking = acqCount/10.0;
+else cycle_checking = 1000;
+TH1F* 					AssignedChannelHist[32][cycle_checking];
+TH1F* 					trigger_difference_per_acq[32][cycle_checking];
+TH1F*					cycle_time[32][cycle_checking];
+TH1F*					cycle_time_ext[cycle_checking];
 FolderName.str("");
 FolderName << "Acquisition_Cycles";
 General_folder->mkdir(FolderName.str().c_str());
 TDirectory *gen_cycle_folder = General_folder->GetDirectory(FolderName.str().c_str());
 rFile->cd(gen_cycle_folder->GetPath());
-
-
-for (int cycles = 0; cycles < 1000; cycles++) // produce subfolders per cycle
+for (uint cycles = 0; cycles < cycle_checking; cycles++) // produce subfolders per cycle
 {
 	FolderName.str("");
 	FolderName << "Cycle_" << cycles;
@@ -331,53 +412,10 @@ for (int cycles = 0; cycles < 1000; cycles++) // produce subfolders per cycle
 	cycle_time_ext[cycles] = new TH1F(tmp.str().c_str(), "time_distribution_external; time [#bunch_clk_count]; #entries/#acq.cycles", 8192, -0.5, 8191.5);
 }
 
- while ( dataRead.next(&event) ) // event read to check for filled channels and kpix to reduce number of empty histograms.
-   {
-     acqCount++;
-     //if ( acqCount < 10)
-     //{
-     //cout << "DEBUG: EVENTNUMBER " << event.eventNumber() << endl;
-     //}
-     if (acqCount > skip_cycles_front){
-       acqProcessed++;
-       for (x=0; x < event.count(); x++)
-	 {
-	   
-	   //// Get sample
-	   sample  = event.sample(x);
-	   kpix    = sample->getKpixAddress();
-	   channel = sample->getKpixChannel();
-	   bucket  = sample->getKpixBucket();
-	   type    = sample->getSampleType();
-	   if ( type == KpixSample::Data )
-	     {
-	       kpixFound[kpix]          = true;
-	       chanFound[kpix][channel] = true;
-	       bucketFound[kpix][channel][bucket] = true;
-	     }
-	   //cout << "KPIX: " << kpix << endl;
-	   //cout << "Channel: " << channel << endl;
-	   kpixFound[0] = false; // for some reason the system finds a kpix in slot 0
-	 }
-     }
-     else {
-       auto byte = event.count();
-       auto train = event.eventNumber();
-       if (f_skipped_cycles!=NULL)
-	 fprintf(f_skipped_cycles, " index = %d , byte = %6d, train = %6d \n ", acqCount, byte, train);
-       
-     }
-   }
 
- if (f_skipped_cycles!=NULL)  {
-    fclose( f_skipped_cycles);
-    cout << endl;
-    cout << "Wrote skipped cycles to " << outtxt << endl;
-    cout << endl;
-  }
+
 
  dataRead.close();
- range = 0;
 //for (int u = 0; u<32; ++u)
 //{
 	//if (kpixFound[u])
@@ -457,6 +495,11 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 
 		for (bucket = 0; bucket< 4; bucket++)
 		{
+			FolderName.str("");
+			FolderName << "bucket_" << bucket;
+			kpix_folder->mkdir(FolderName.str().c_str());
+			TDirectory *gen_buckets_folder = kpix_folder->GetDirectory(FolderName.str().c_str());
+			rFile->cd(gen_buckets_folder->GetPath());
 			tmp.str("");
 			tmp << "Channel_entries_k_" << kpix << "_b" << bucket;
 			channel_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel_Entries; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
@@ -491,7 +534,7 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 		kpix_folder->mkdir(FolderName.str().c_str());
 		TDirectory *cycle_folder = kpix_folder->GetDirectory(FolderName.str().c_str());
 		rFile->cd(cycle_folder->GetPath());
-		for (int cycles = 0; cycles < 1000; cycles++)
+		for (uint cycles = 0; cycles < cycle_checking; cycles++)
 		{
 			FolderName.str("");
 			FolderName << "cycle_" << cycles;
@@ -545,7 +588,11 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 					{
 						// Naming of histograms and generating of histograms
 
-
+						FolderName.str("");
+						FolderName << "bucket_" << bucket;
+						channel_folder->mkdir(FolderName.str().c_str());
+						TDirectory *buckets_folder = channel_folder->GetDirectory(FolderName.str().c_str());
+						rFile->cd(buckets_folder->GetPath());
 
 
 						tmp.str("");  //set stringstream tmp to an empty string
@@ -613,80 +660,85 @@ for (kpix = 0; kpix < 32; kpix++) //looping through all possible kpix
 }
 
 //////////////////////////////////////////
-// Data read for first 1000 events for detailed look into single event structure
+// Data read for all events for detailed look into single event structure
 //////////////////////////////////////////
 dataRead.open(argv[1]); //open binary file
 uint cycle_num = 0;
 int cycle_num_ext = -1;
- while ( dataRead.next(&event) ) //loop through binary file event structure until end of file
-   {
-     cycle_num++;
-     if ( cycle_num > skip_cycles_front){
-       double 	trigger_counter[32] = {0}; // fill the entire list of trigger_counter with 0
+
+while ( dataRead.next(&event) ) //loop through binary file event structure until end of file
+{
+	cycle_num++;
+	if ( cycle_num > skip_cycles_front)
+	{
+		double 	trigger_counter[32] = {0}; // fill the entire list of trigger_counter with 0
+		
+		for (x=0; x < event.count(); x++)  //within the binary file go through each event
+		{
+				//// Get sample
+			sample  = event.sample(x);  // check event subtructure
+			kpix    = sample->getKpixAddress();
+			channel = sample->getKpixChannel();
+			bucket  = sample->getKpixBucket();
+			value   = sample->getSampleValue();
+			type    = sample->getSampleType();
+			tstamp  = sample->getSampleTime();
+			range   = sample->getSampleRange();
+			if (type == 2) //if type of event is ==2, the event is of type external timestamp
+			{
+				//cout << cycle_num << endl;
+				//cout << cycle_num_ext << endl;
+				if (x == 0) cycle_num_ext++;
+				double time = tstamp + double(value * 0.125);
+				if (cycle_num_ext < cycle_checking) 
+				{
+					//cout << cycle_num_ext <<  " " << time << endl;
+					cycle_time_ext[cycle_num_ext]->Fill(time);
+				}
+			}
+			if ( type == KpixSample::Data ) // If event is of type KPiX data
+			{
+				channel_entries[kpix][bucket]->Fill(channel, weight);
+				channel_entries[kpix][4]->Fill(channel, weight);
+				
+				strip_entries[kpix][bucket]->Fill(kpix2strip.at(channel), weight);
+				strip_entries[kpix][4]->Fill(kpix2strip.at(channel), weight);
+				
+				times_kpix[kpix][bucket]->Fill(tstamp, weight);
+				times_kpix[kpix][4]->Fill(tstamp, weight);
+				trigger_counter[kpix] = trigger_counter[kpix] + (1.0/num_of_channels[kpix]);
+				if (kpix2strip.at(channel) == 9999)
+				{
+					channel_entries_no_strip[kpix][bucket]->Fill(channel,weight);
+					channel_entries_no_strip[kpix][4]->Fill(channel,weight);
+				}
+				if (find(monster_cycles.begin(), monster_cycles.end(), event.eventNumber()) != monster_cycles.end())
+				{
+					times_kpix_monster[kpix][bucket]->Fill(tstamp, weight);
+					times_kpix_monster[kpix][4]->Fill(tstamp, weight);
+				}
+				else
+				{
+					channel_entries_no_monster[kpix][bucket]->Fill(channel, weight);
+					channel_entries_no_monster[kpix][4]->Fill(channel, weight);
+					times_kpix_no_monster[kpix][bucket]->Fill(tstamp, weight);
+					times_kpix_no_monster[kpix][4]->Fill(tstamp, weight);
+				}
+				if (cycle_num < cycle_checking)		
+				{
+					cycle_time[kpix][cycle_num]->Fill(tstamp);
+				}
+			}	
+		}
+
        
-       for (x=0; x < event.count(); x++)  //within the binary file go through each event
-	 {
-	   //// Get sample
-	   sample  = event.sample(x);  // check event subtructure
-	   kpix    = sample->getKpixAddress();
-	   channel = sample->getKpixChannel();
-	   bucket  = sample->getKpixBucket();
-	   value   = sample->getSampleValue();
-	   type    = sample->getSampleType();
-	   tstamp  = sample->getSampleTime();
-	   range   = sample->getSampleRange();
-	   if (type == 2) //if type of event is ==2, the event is of type external timestamp
-	     {
-	       //cout << cycle_num << endl;
-	       //cout << cycle_num_ext << endl;
-	       if (x == 0) cycle_num_ext++;
-	       double time = tstamp + double(value * 0.125);
-	       if (cycle_num_ext < 1000) {
-		 //cout << cycle_num_ext <<  " " << time << endl;
-		 cycle_time_ext[cycle_num_ext]->Fill(time);
-	       }
-	     }
-	   if ( type == KpixSample::Data ) // If event is of type KPiX data
-	     {
-	       channel_entries[kpix][bucket]->Fill(channel, weight);
-	       channel_entries[kpix][4]->Fill(channel, weight);
-	       
-	       strip_entries[kpix][bucket]->Fill(kpix2strip.at(channel), weight);
-	       strip_entries[kpix][4]->Fill(kpix2strip.at(channel), weight);
-	       
-	       times_kpix[kpix][bucket]->Fill(tstamp, weight);
-	       times_kpix[kpix][4]->Fill(tstamp, weight);
-	       trigger_counter[kpix] = trigger_counter[kpix] + (1.0/num_of_channels[kpix]);
-	       if (kpix2strip.at(channel) == 9999)
-		 {
-		   channel_entries_no_strip[kpix][bucket]->Fill(channel,weight);
-		   channel_entries_no_strip[kpix][4]->Fill(channel,weight);
-		 }
-	       if (event.count() > 700)
-		 {
-		   times_kpix_monster[kpix][bucket]->Fill(tstamp, weight);
-		   times_kpix_monster[kpix][4]->Fill(tstamp, weight);
-		 }
-	       else
-		 {
-		   channel_entries_no_monster[kpix][bucket]->Fill(channel, weight);
-		   channel_entries_no_monster[kpix][4]->Fill(channel, weight);
-		   times_kpix_no_monster[kpix][bucket]->Fill(tstamp, weight);
-		   times_kpix_no_monster[kpix][4]->Fill(tstamp, weight);
-		 }
-	       if (cycle_num < 1000)
-		 {
-		   cycle_time[kpix][cycle_num]->Fill(tstamp);
-		 }
-	     }
-	 }
-       
-       //if (trigger_counter[26] > 4) cout << trigger_counter[26] << endl;
-       if (kpixFound[26]) acq_num_ext[26]->Fill(trigger_counter[26]); // trigger counting for monster check
-       if (kpixFound[28]) acq_num_ext[28]->Fill(trigger_counter[28]);
-       if (kpixFound[30]) acq_num_ext[30]->Fill(trigger_counter[30]);
-     }
-   }
+		//if (trigger_counter[26] > 4) cout << trigger_counter[26] << endl;
+		if (kpixFound[26]) acq_num_ext[26]->Fill(trigger_counter[26]); // trigger counting for monster check
+		if (kpixFound[28]) acq_num_ext[28]->Fill(trigger_counter[28]);
+		if (kpixFound[30]) acq_num_ext[30]->Fill(trigger_counter[30]);
+	}
+}
+
 dataRead.close(); // close file as we have looped through it and are now at the end
 dataRead.open(argv[1]); //open file again to start from the beginning
 
@@ -805,11 +857,9 @@ while ( dataRead.next(&event) )
 		      assigned_number =  distance(trig_diff_list.begin(), min_element(trig_diff_list.begin(), trig_diff_list.end())); //position of smallest element in trigger difference vector
 		      time_diff_kpix_ext[kpix].push_back(trig_diff);
 		      //cout << assigned_number << endl;
-		      if (cycle_num < 1000)
-			{
-			  AssignedChannelHist[kpix][cycle_num]->Fill(assigned_number);
-			  trigger_difference_per_acq[kpix][cycle_num]->Fill(trig_diff);
-			}
+			AssignedChannelHist[kpix][cycle_num]->Fill(assigned_number);
+			trigger_difference_per_acq[kpix][cycle_num]->Fill(trig_diff);
+			
 		      
 		      AssignedTrigger[kpix].push_back(assigned_number);
 		      //Assignment_number.push_back(assigned_number);
