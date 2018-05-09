@@ -35,6 +35,6 @@ dir:
 	test -d $(BIN) || mkdir $(BIN)
 
 map:
-	python python/stripMapMaker.py data/tracker_to_kpix_left.txt include/kpix_left.h
+	python python/stripMapMaker.py data/tracker_to_kpix_left.txt data/tracker_to_kpix_right.txt include/kpix_left_and_right.h
 clean:
 	rm $(BIN)/*
