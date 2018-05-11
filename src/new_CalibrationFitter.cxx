@@ -225,7 +225,7 @@ int main ( int argc, char **argv ) {
   TH1F                   *hist;
   TH1F                   *resid[256];
   stringstream           tmp;
-  bool                   defresid=true;
+ // bool                   defresid=true;
   ofstream               xml;
   ofstream               csv;
   double                 grX[256];
@@ -300,7 +300,7 @@ int main ( int argc, char **argv ) {
   
   uint 					noise_cut = 1.0;
 
-  bool                    printalot=false;
+ // bool                    printalot=false;
 
  unordered_map<uint, uint> kpix2strip;
  kpix2strip = kpix_left();
@@ -642,11 +642,11 @@ int main ( int argc, char **argv ) {
 	TH1F *PedestalsRMS_fc0_conn_120 = new TH1F("PedestalsRMS_fc0_conn_120", "Pedestals RMS, conn. Chn in 0-128; [fC]; a.u.", 1000, 0, 2);
 	TH1F *PedestalsRMS_fc0_conn_800 = new TH1F("PedestalsRMS_fc0_conn_800", "Pedestals RMS, conn. Chn after 128; [fC]; a.u.", 1000, 0, 2);
 		
-	TH1F *PedestalsRMS_fc2 = new TH1F("PedestalsRMS_fc2", "Pedestals RMS [fC]", 1000, 0, 10);
-	TH1F *PedestalsRMS_fc3 = new TH1F("PedestalsRMS_fc3", "Pedestals RMS [fC]", 1000, 0, 10);
+	//TH1F *PedestalsRMS_fc2 = new TH1F("PedestalsRMS_fc2", "Pedestals RMS [fC]", 1000, 0, 10);
+	//TH1F *PedestalsRMS_fc3 = new TH1F("PedestalsRMS_fc3", "Pedestals RMS [fC]", 1000, 0, 10);
 	
-	TH1F *Pedestals_fc2 = new TH1F("Pedestals_fc2", "Pedestals [fC]", 1000, -100, 100);
-	TH1F *Pedestals_fc3 = new TH1F("Pedestals_fc3", "Pedestals [fC]", 1000, -100, 100);
+	//TH1F *Pedestals_fc2 = new TH1F("Pedestals_fc2", "Pedestals [fC]", 1000, -100, 100);
+	//TH1F *Pedestals_fc3 = new TH1F("Pedestals_fc3", "Pedestals [fC]", 1000, -100, 100);
 	
   
 	rFile->cd(); // move into root folder base
@@ -806,420 +806,312 @@ int main ( int argc, char **argv ) {
   summary111->Write();
   cout << endl;
   
-  //////////////////////////////////////////
-  // Process Calibration
-  //////////////////////////////////////////
-  
-  	rFile->cd(); // move into root folder base
+   //////////////////////////////////////////
+   // Process Calibration
+   //////////////////////////////////////////
+	rFile->cd(); // move into root folder base
 	FolderName.str("");
 	FolderName << "Calibration_and_Residuals";
 	rFile->mkdir(FolderName.str().c_str()); // produce a sub folder with name of variable FolderName
 	TDirectory *calibration_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
 	calibration_folder->cd(); // move into subdirectory
-  
-  // Process each kpix device
-  for (kpix=0; kpix<32; kpix++) {
-    if ( kpixFound[kpix] ) {
-      
-      // Get serial number
-      tmp.str("");
-      tmp << "cntrlFpga(0):kpixAsic(" << dec << kpix << "):SerialNumber";
-      serial = dataRead.getConfig(tmp.str());
-      xml << "   <kpixAsic id=\"" << serial << "\">" << endl;
-      
-      // Process each channel
-      for (channel=minChan; channel <= maxChan; channel++) {
-	
-	// Show progress
-	cout << "\rProcessing calibration kpix " << dec << kpix << " / " << dec << kpixMax
-	     << ", Channel " << channel << " / " << dec << maxChan 
-	     << "                 " << flush;
-	
-	// Channel is valid
-	if ( chanFound[kpix][channel] ) {
-	  
-	  // Start channel marker
-	  xml << "      <Channel id=\"" << channel << "\">" << endl;
-	  
-	  // Each bucket
-	  for (bucket = 0; bucket < 4; bucket++) {
-	    
-	    // Bucket is valid
-	    if ( chanData[kpix][channel][bucket][0] != NULL || chanData[kpix][channel][bucket][1] != NULL ) {
-	      xml << "         <Bucket id=\"" << bucket << "\">" << endl;
-	      
-	      // Each range
-	      for (range = 0; range < 2; range++) {
-		
-		// Range is valid
-		if ( chanData[kpix][channel][bucket][range] != NULL ) {
-		  xml << "            <Range id=\"" << range << "\">" << endl;
-		  chanData[kpix][channel][bucket][range]->computeCalib(chargeError[range]);
-		  csv << serial << "," << dec << channel << "," << dec << bucket << "," << dec << range;
-		  
-		  // Add baseline data to xml
-		  addDoubleToXml(&xml,15,"BaseMean",chanData[kpix][channel][bucket][range]->baseMean);
-		  addDoubleToXml(&xml,15,"BaseRms",chanData[kpix][channel][bucket][range]->baseRms);
-		  if ( chanData[kpix][channel][bucket][range]->baseFitMean != 0 ) {
-		    addDoubleToXml(&xml,15,"BaseFitMean",chanData[kpix][channel][bucket][range]->baseFitMean);
-		    addDoubleToXml(&xml,15,"BaseFitSigma",chanData[kpix][channel][bucket][range]->baseFitSigma);
-		    addDoubleToXml(&xml,15,"BaseFitMeanErr",chanData[kpix][channel][bucket][range]->baseFitMeanErr);
-		    addDoubleToXml(&xml,15,"BaseFitSigmaErr",chanData[kpix][channel][bucket][range]->baseFitSigmaErr);
-		    addDoubleToXml(&xml,15,"BaseFitChisquare",chanData[kpix][channel][bucket][range]->baseFitChisquare);
-		  }
-		  
-		  // Add baseline data to excel file
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseMean;
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseRms;
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseFitMean;
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseFitSigma;
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseFitMeanErr;
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseFitSigmaErr;
-		  csv << "," << chanData[kpix][channel][bucket][range]->baseFitChisquare;
-		  
-		  // Create calibration graph
-		  grCount = 0;
-		  crossString.str("");
-		  crossStringCsv.str("");
-		  //int num=0;
-		  for (x=0; x < 256; x++) {
-		    
-		    // Calibration point is valid
-		    if ( chanData[kpix][channel][bucket][range]->calibCount[x] > 0 ) {
-		      grX[grCount]    = calibCharge ( x, positive, ((bucket==0)?b0CalibHigh:false));
-		      grY[grCount]    = chanData[kpix][channel][bucket][range]->calibMean[x];
-		      grYErr[grCount] = chanData[kpix][channel][bucket][range]->calibError[x];
-		      grXErr[grCount] = 0;
-		      
-		      //if ( num == 0 ) {
-		      //cout<<"channel "<<channel<< " x "<<x<<" positive "<<positive<<" calibCount "<<chanData[kpix][channel][bucket][range]->calibCount[x]<<
-		      //" grCount "<<grCount<<" grX "<<grX[grCount]<<" grY "<<grY[grCount]<<endl;
-		      //}
-		      //num=100;
-		      
-#if 0
-		      debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
-			    << " Range=" << dec << range
-			    << " Adding point x=" << grX[grCount] 
-			    << " Rms=" << chanData[kpix][channel][bucket][range]->calibRms[x]
-			    << " Error=" << chanData[kpix][channel][bucket][range]->calibError[x] << endl;
-#endif
-		      grCount++;
-		      
-		      // Find crosstalk, value - base > 3 * sigma
-		      for (crChan=0; crChan < 1024; crChan++ ) {
-			
-			if ( chanData[kpix][crChan][bucket][range] != NULL ) {
-			  
-			  crossDiff = chanData[kpix][channel][bucket][range]->calibOtherValue[crChan] - 
-			    chanData[kpix][crChan][bucket][range]->baseMean;
-			  
-			  if ( (chanData[kpix][channel][bucket][range]->calibOtherDac[crChan] == x)  && 
-			       (crChan != channel) && 
-			       (chanData[kpix][channel][bucket][range] != NULL ) &&
-			       (crossDiff > (10.0 * chanData[kpix][crChan][bucket][range]->baseRms))) {
-			    
-			    if ( crossString.str() != "" ) crossString << " ";
-			    crossString << dec << crChan << ":" << dec << (uint)crossDiff;
-			    crossStringCsv << "," << dec << crChan << "," << dec << (uint)crossDiff;
-			  }
-			}
-		      }
-		    }
-		  }
-		  
-		  // Create graph
-		  if ( grCount > 0 ) {
+   // Process each kpix device
+	for (kpix=0; kpix<32; kpix++) 
+	{
+		if ( kpixFound[kpix] ) 
+		{
 
-		    grCalib = new TGraphErrors(grCount,grX,grY,grXErr,grYErr);
-		    grCalib->Draw("Ap");
-		    grCalib->GetXaxis()->SetTitle("Charge [C]");
-		    grCalib->GetYaxis()->SetTitle("ADC");
-
-		    grCalib->Fit("fitCalib", "Bq+", "",fitMin[range],fitMax[range]);
-		    grCalib->GetFunction("fitCalib")->SetLineWidth(1);
-		    grCalib->GetFunction("fitCalib")->SetLineColor(kGreen);
-
-		    grCalib->Fit("pol1","eq+","",fitMin[range],fitMax[range]);
-		    grCalib->GetFunction("pol1")->SetLineWidth(1);
-
-		    auto fitCalibFunc = grCalib->GetFunction("pol1");
-		    
-		    // Create name and write
-		    tmp.str("");
-		    tmp << "calib_" << serial << "_c" << dec << setw(4) << setfill('0') << channel;
-		    tmp << "_b" << dec << bucket;
-		    tmp << "_r" << dec << range;
-		    grCalib->SetTitle(tmp.str().c_str());
-		    grCalib->Write(tmp.str().c_str());
-		   // channel_file_calib << channel << endl;
-		    
-		    
-		    //create histogram that will have all the DAC measurement of all channels for a specific injected charge
-		    if ( defresid == true) {
-		      for (x=0; x < grCount; x++) {
+			// Get serial number
 			tmp.str("");
-			tmp << "resid_" << x;
-			resid[x] = new TH1F(tmp.str().c_str(),tmp.str().c_str(),400,-100,100);
-			//cout<<defresid<<" "<<x<<" "<<tmp.str().c_str()<<endl;
-		      }
-		    }
-		    defresid=false;
-		    
-		    // Create and store residual plot
-		    for (x=0; x < grCount; x++){
-		      grRes[x] = (grY[x] - fitCalibFunc->Eval(grX[x]));
-		      // Fill histogram
-		      resid[x]->Fill(grRes[x]);
-		    }
-		    //cout<<"grRes["<<1<<"] "<<grRes[1]<<endl;
-		    grResid = new TGraphErrors(grCount,grX,grRes, grXErr, grYErr);
-		    grResid->Draw("Ap");
-		    
-		    // Create name and write
-		    tmp.str("");
-		    tmp << "resid_" << serial << "_c" << dec << setw(4) << setfill('0') << channel;
-		    tmp << "_b" << dec << bucket;
-		    tmp << "_r" << dec << range;
-		    grResid->SetTitle(tmp.str().c_str());
-		    grResid->Write(tmp.str().c_str());
-		    
-		    // Add to xml
-		    if ( fitCalibFunc ) {
-		      chisqNdf = (fitCalibFunc->GetChisquare() / fitCalibFunc->GetNDF());
-		      Double_t slope = fitCalibFunc->GetParameter(1);
-		      Double_t offset = offset;
-		      
-		      addDoubleToXml(&xml,15,"CalibGain",slope);
-		      addDoubleToXml(&xml,15,"CalibIntercept",offset);
-		      addDoubleToXml(&xml,15,"CalibGainErr",fitCalibFunc->GetParError(1));
-		      addDoubleToXml(&xml,15,"CalibInterceptErr",fitCalibFunc->GetParError(0));
-		      addDoubleToXml(&xml,15,"CalibChisquare",chisqNdf);
-		      csv << "," << slope;
-		      csv << "," << offset;
-		      csv << "," << fitCalibFunc->GetParError(1);
-		      csv << "," << fitCalibFunc->GetParError(0);
-		      csv << "," << chisqNdf;
-		      
-		      
-		      double ped_charge3 = ( chanData[kpix][channel][bucket][range]->baseHistMean - offset ) / slope;
-		      double ped_charge2 = ( chanData[kpix][channel][bucket][range]->baseFitMean - offset ) / slope;
-		      double ped_charge = ( chanData[kpix][channel][bucket][range]->baseFitMean ) / slope;
-
-		      double ped_charge_err0 = (chanData[kpix][channel][bucket][range]->baseHistRMS) / slope ; // simple err
-		      double ped_charge_err = sqrt( ( chanData[kpix][channel][bucket][range]->baseFitSigma / slope *
-						      chanData[kpix][channel][bucket][range]->baseFitSigma / slope ) +
-						    ( - fitCalibFunc->GetParError(0) / slope *
-						      ( - fitCalibFunc->GetParError(0) / slope) ) +
-						    ( - 1 / ( fitCalibFunc->GetParError(1) * fitCalibFunc->GetParError(1) ) * 
-						      ( - 1 / ( fitCalibFunc->GetParError(1) * fitCalibFunc->GetParError(1) ) ) ) );
-		      
-		      double ped_charge_err2 = sqrt( ( chanData[kpix][channel][bucket][range]->baseFitSigma / slope *
-						       chanData[kpix][channel][bucket][range]->baseFitSigma / slope ) +
-						     ( - fitCalibFunc->GetParError(0) / slope *
-						       ( - fitCalibFunc->GetParError(0) / slope) ) +
-						     ( - ( chanData[kpix][channel][bucket][range]->baseFitMean - offset )  / 
-						       ( fitCalibFunc->GetParError(1) * fitCalibFunc->GetParError(1) ) * 
-						       ( - ( chanData[kpix][channel][bucket][range]->baseFitMean - offset )  / 
-							 ( fitCalibFunc->GetParError(1) * fitCalibFunc->GetParError(1) ) ) ) );
-		      
-		      
-		      double ped_charge_err3 = sqrt( ( chanData[kpix][channel][bucket][range]->baseHistRMS / slope *
-						       chanData[kpix][channel][bucket][range]->baseHistRMS / slope ) +
-						     ( - fitCalibFunc->GetParError(0) / slope *
-						       ( - fitCalibFunc->GetParError(0) / slope) ) +
-						     ( - ( chanData[kpix][channel][bucket][range]->baseHistMean - offset )  / 
-						       ( fitCalibFunc->GetParError(1) * fitCalibFunc->GetParError(1) ) * 
-						       ( - ( chanData[kpix][channel][bucket][range]->baseHistMean - offset )  / 
-							 ( fitCalibFunc->GetParError(1) * fitCalibFunc->GetParError(1) ) ) ) );
-
-		      if (printalot){
-			cout<<"\n ped_charge 1 = "<<ped_charge*pow(10,15)<< " error " << ped_charge_err*pow(10,15)
-			    <<"\n ped_charge 2 = "<<ped_charge2*pow(10,15)<< " error " << ped_charge_err2*pow(10,15)
-			    <<"\n ped_charge 3 = "<<ped_charge3*pow(10,15)<< " error " << ped_charge_err3*pow(10,15)<<endl;
-		      }
-		      
-		      summary4->Fill( ped_charge * pow(10,15) );
-		      summary14->Fill( ped_charge_err * pow(10,15) );
-
-		      
-		      Pedestals_fc2->Fill( ped_charge2 * pow(10,15) );
-		      Pedestals_fc3->Fill( ped_charge3 * pow(10,15) );
-		      PedestalsRMS_fc0->Fill( ped_charge_err0 * pow(10,15) );
-		      if ( kpix2strip.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err0 * pow(10,15) );
-		      else{
-			if (channel < 128) PedestalsRMS_fc0_conn_120 -> Fill(ped_charge_err0 * pow(10,15));
-			else PedestalsRMS_fc0_conn_800 -> Fill(ped_charge_err0 * pow(10,15));
+			tmp << "cntrlFpga(0):kpixAsic(" << dec << kpix << "):SerialNumber";
+			serial = dataRead.getConfig(tmp.str());
+			xml << "   <kpixAsic id=\"" << serial << "\">" << endl;
+	
+			// Process each channel
+			for (channel=minChan; channel <= maxChan; channel++) 
+			{
+	
+				// Show progress
+				cout << "\rProcessing calibration kpix " << dec << kpix << " / " << dec << kpixMax
+					<< ", Channel " << channel << " / " << dec << maxChan 
+					<< "                 " << flush;
+	
+				// Channel is valid
+				if ( chanFound[kpix][channel] ) 
+				{
+	
+					// Start channel marker
+					xml << "      <Channel id=\"" << channel << "\">" << endl;
+	
+					// Each bucket
+					for (bucket = 0; bucket < 4; bucket++) 
+					{
+				
+						// Bucket is valid
+						if ( chanData[kpix][channel][bucket][0] != NULL || chanData[kpix][channel][bucket][1] != NULL ) 
+						{
+							xml << "         <Bucket id=\"" << bucket << "\">" << endl;
+		
+							// Each range
+							for (range = 0; range < 2; range++) 
+							{
+		
+								// Range is valid
+								if ( chanData[kpix][channel][bucket][range] != NULL ) 
+								{
+									xml << "            <Range id=\"" << range << "\">" << endl;
+									chanData[kpix][channel][bucket][range]->computeCalib(chargeError[range]);
+									csv << serial << "," << dec << channel << "," << dec << bucket << "," << dec << range;
 			
-			PedestalsRMS_fc0_conn->Fill( ped_charge_err0 * pow(10,15) );
-		      }
-		      
-		      PedestalsRMS_fc2->Fill( ped_charge_err2 * pow(10,15) );
-		      PedestalsRMS_fc3->Fill( ped_charge_err3 * pow(10,15) );
-
-		      if (ped_charge_err * pow(10,15) >= noise_cut)
-		      {
-				  channel_file_noise << channel << endl ;
-			  }
-
-		      summary2->Fill( slope / pow(10,15) );
-		      
-		      summary2_1->SetBinContent( channel+1, slope / pow(10,15));
-		      if (abs(ped_charge_err0 * pow(10,15)) < 20) RMSfc_v_channel->SetBinContent(channel, ped_charge_err0 * pow(10,15));
-		      //summary2_1->Fill( channel, slope / pow(10,15) );
-		      
-		      summary3->Fill( offset);
-		      
-		      summary12->Fill( fitCalibFunc->GetParError(1) / pow(10,15) );
-		      summary13->Fill( fitCalibFunc->GetParError(0));
-		      
-		      
-		      
-		      
-		      // Determine bad channel from fitted gain
-		      if ( ( slope / pow(10,15) < 2 /*gainMin[range]*/) || (slope / pow(10,15) > 25 )) {     // OWN CHANGES!
-			debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
-			      << " Range=" << dec << range
-			      << " Bad gain value=" << slope << endl;
-			badGain[kpix][channel] = true;
-			badGainFitCnt++;
-			//cout << endl << "Bad calibration fit " << "slope = " << slope / pow(10,15) << endl << endl;
-			//channel_file_bad_fit << channel << endl;
-		      }
-		      
-		      // Determine bad channel from fitted chisq
-		      if ( findBadGainChisq && (chisqNdf >  gainChisq) ) {
-			debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
-			      << " Range=" << dec << range
-			      << " Bad gain chisq=" << gainChisq << endl;
-			badGain[kpix][channel] = true;
-										badGainChisqCnt++;
-		      }
-		    }
-		    else {
-		      csv << ",0,0,0,0,0";
-		      cout << "\n [dev] failed to fit gain for: channel = "<< dec <<channel
-			   << ", buc = " << dec<< bucket << endl;
+									// Add baseline data to xml
+									addDoubleToXml(&xml,15,"BaseMean",chanData[kpix][channel][bucket][range]->baseMean);
+									addDoubleToXml(&xml,15,"BaseRms",chanData[kpix][channel][bucket][range]->baseRms);
+									if ( chanData[kpix][channel][bucket][range]->baseFitMean != 0 ) 
+									{
+										addDoubleToXml(&xml,15,"BaseFitMean",chanData[kpix][channel][bucket][range]->baseFitMean);
+										addDoubleToXml(&xml,15,"BaseFitSigma",chanData[kpix][channel][bucket][range]->baseFitSigma);
+										addDoubleToXml(&xml,15,"BaseFitMeanErr",chanData[kpix][channel][bucket][range]->baseFitMeanErr);
+										addDoubleToXml(&xml,15,"BaseFitSigmaErr",chanData[kpix][channel][bucket][range]->baseFitSigmaErr);
+										addDoubleToXml(&xml,15,"BaseFitChisquare",chanData[kpix][channel][bucket][range]->baseFitChisquare);
+									}
 			
-		      if ( findBadGainFit || findBadGainChisq ) {
-			debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
-			      << " Range=" << dec << range
-			      << " Failed to fit gain" << endl;
-			badGain[kpix][channel] = true;
-			failedGainFit++;
-		      }
-		    }
-		    
-		    addDoubleToXml(&xml,15,"CalibGainRms",grCalib->GetRMS(2));
-		    csv << "," << grCalib->GetRMS(2);
-		    
-		    if ( crossString.str() != "" ) addStringToXml(&xml,15,"CalibCrossTalk",crossString.str());
-		    csv << crossStringCsv.str();
-		  }
-		  csv << endl; 
-		  xml << "            </Range>" << endl;
-		}
-	      }
-	      xml << "         </Bucket>" << endl;
-	    }
-	  }
-	  
-	  // Determine if the channel is bad
-	  
-	  badValue = 0;
-	  if ( badMean[kpix][channel] ) badValue |= 0x1;
-	  if ( badGain[kpix][channel] ) badValue |= 0x2;
-	  
-	  if ( badValue != 0 ) {
-	    debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel
-		  << " Marking channel bad." << endl;
-	    badChannelCnt++;
-	  }
-	  
-	  xml << "         <BadChannel>" << dec << badValue << "</BadChannel>" << endl;
-	  xml << "      </Channel>" << endl;
-	}
+									// Add baseline data to excel file
+									csv << "," << chanData[kpix][channel][bucket][range]->baseMean;
+									csv << "," << chanData[kpix][channel][bucket][range]->baseRms;
+									csv << "," << chanData[kpix][channel][bucket][range]->baseFitMean;
+									csv << "," << chanData[kpix][channel][bucket][range]->baseFitSigma;
+									csv << "," << chanData[kpix][channel][bucket][range]->baseFitMeanErr;
+									csv << "," << chanData[kpix][channel][bucket][range]->baseFitSigmaErr;
+									csv << "," << chanData[kpix][channel][bucket][range]->baseFitChisquare;
+			
+									// Create calibration graph
+									grCount = 0;
+									crossString.str("");
+									crossStringCsv.str("");
+									for (x=0; x < 256; x++) 
+									{
+									
+										// Calibration point is valid
+										if ( chanData[kpix][channel][bucket][range]->calibCount[x] > 0 ) {
+											grX[grCount]    = calibCharge ( x, positive, ((bucket==0)?b0CalibHigh:false));
+											grY[grCount]    = chanData[kpix][channel][bucket][range]->calibMean[x];
+											grYErr[grCount] = chanData[kpix][channel][bucket][range]->calibError[x];
+											grXErr[grCount] = 0;
+											debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
+												<< " Range=" << dec << range
+												<< " Adding point x=" << grX[grCount] 
+												<< " Rms=" << chanData[kpix][channel][bucket][range]->calibRms[x]
+												<< " Error=" << chanData[kpix][channel][bucket][range]->calibError[x] << endl;
+											grCount++;
+			
+											// Find crosstalk, value - base > 3 * sigma
+											for (crChan=0; crChan < 1024; crChan++ ) {
+			
+												if ( chanData[kpix][crChan][bucket][range] != NULL ) 
+												{
+			
+													crossDiff = chanData[kpix][channel][bucket][range]->calibOtherValue[crChan] - 
+																chanData[kpix][crChan][bucket][range]->baseMean;
+				
+													if ( (chanData[kpix][channel][bucket][range]->calibOtherDac[crChan] == x)  && 
+															(crChan != channel) && 
+															(chanData[kpix][channel][bucket][range] != NULL ) &&
+															(crossDiff > (10.0 * chanData[kpix][crChan][bucket][range]->baseRms))) 
+													{
+				
+														if ( crossString.str() != "" ) crossString << " ";
+														crossString << dec << crChan << ":" << dec << (uint)crossDiff;
+														crossStringCsv << "," << dec << crChan << "," << dec << (uint)crossDiff;
+													}
+												}
+											}
+										}
+									}
+			
+									// Create graph
+									if ( grCount > 0 ) 
+									{
+										grCalib = new TGraphErrors(grCount,grX,grY,grXErr,grYErr);
+										grCalib->Draw("Ap");
+										grCalib->GetXaxis()->SetTitle("Charge [C]");
+										grCalib->GetYaxis()->SetTitle("ADC");
+										grCalib->Fit("pol1","eq","",fitMin[range],fitMax[range]);
+										grCalib->GetFunction("pol1")->SetLineWidth(1);
+				
+										// Create name and write
+										tmp.str("");
+										tmp << "calib_" << serial << "_c" << dec << setw(4) << setfill('0') << channel;
+										tmp << "_b" << dec << bucket;
+										tmp << "_r" << dec << range;
+										grCalib->SetTitle(tmp.str().c_str());
+										grCalib->Write(tmp.str().c_str());
+				
+										// Create and store residual plot
+										for (x=0; x < grCount; x++) grRes[x] = (grY[x] - grCalib->GetFunction("pol1")->Eval(grX[x]));
+										grResid = new TGraph(grCount,grX,grRes);
+										grResid->Draw("Ap");
+										grResid->GetXaxis()->SetTitle("Charge [C]");
+										grResid->GetYaxis()->SetTitle("ADC");
+				
+										// Create name and write
+										tmp.str("");
+										tmp << "resid_" << serial << "_c" << dec << setw(4) << setfill('0') << channel;
+										tmp << "_b" << dec << bucket;
+										tmp << "_r" << dec << range;
+										grResid->SetTitle(tmp.str().c_str());
+										grResid->Write(tmp.str().c_str());
+				
+										// Add to xml
+										if ( grCalib->GetFunction("pol1") ) {
+											chisqNdf = (grCalib->GetFunction("pol1")->GetChisquare() / grCalib->GetFunction("pol1")->GetNDF());
+											Double_t slope = grCalib->GetFunction("pol1")->GetParameter(1);
+											Double_t offset = offset;
+			
+											double ped_charge = ( chanData[kpix][channel][bucket][range]->baseFitMean ) / slope;
+											double ped_charge_err = (chanData[kpix][channel][bucket][range]->baseHistRMS) / slope ; // simple err
+			
+											summary4->Fill( ped_charge * pow(10,15) );
+											summary14->Fill( ped_charge_err * pow(10,15) );
+											
+											PedestalsRMS_fc0->Fill( ped_charge_err * pow(10,15) );
+											if ( kpix2strip.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err * pow(10,15) );
+											else{
+											if (channel < 128) PedestalsRMS_fc0_conn_120 -> Fill(ped_charge_err * pow(10,15));
+											else PedestalsRMS_fc0_conn_800 -> Fill(ped_charge_err * pow(10,15));
+											
+											PedestalsRMS_fc0_conn->Fill( ped_charge_err * pow(10,15) );
+											}
+								
+											if (ped_charge_err * pow(10,15) >= noise_cut)
+											{
+												channel_file_noise << channel << endl ;
+											}
+								
+											summary2->Fill( slope / pow(10,15) );
+											
+											summary2_1->SetBinContent( channel+1, slope / pow(10,15));
+											if (abs(ped_charge_err * pow(10,15)) < 20) RMSfc_v_channel->SetBinContent(channel, ped_charge_err * pow(10,15));
+											//summary2_1->Fill( channel, slope / pow(10,15) );
+											
+											summary3->Fill( offset);
+											
+											//summary12->Fill( grCalib->GetFunction("pol1")->GetParError(1) / pow(10,15) );
+											//summary13->Fill( grCalib->GetFunction("pol1")->GetParError(0));
+						
+						
+											
+											
+											
+											
+											addDoubleToXml(&xml,15,"CalibGain",grCalib->GetFunction("pol1")->GetParameter(1));
+											addDoubleToXml(&xml,15,"CalibIntercept",grCalib->GetFunction("pol1")->GetParameter(0));
+											addDoubleToXml(&xml,15,"CalibGainErr",grCalib->GetFunction("pol1")->GetParError(1));
+											addDoubleToXml(&xml,15,"CalibInterceptErr",grCalib->GetFunction("pol1")->GetParError(0));
+											addDoubleToXml(&xml,15,"CalibChisquare",chisqNdf);
+											csv << "," << grCalib->GetFunction("pol1")->GetParameter(1);
+											csv << "," << grCalib->GetFunction("pol1")->GetParameter(0);
+											csv << "," << grCalib->GetFunction("pol1")->GetParError(1);
+											csv << "," << grCalib->GetFunction("pol1")->GetParError(0);
+											csv << "," << chisqNdf;
+											
+											// Determine bad channel from fitted gain
+											if ( findBadGainFit && 
+												( (grCalib->GetFunction("pol1")->GetParameter(1) > gainMax[range]) ||
+													(grCalib->GetFunction("pol1")->GetParameter(1) < gainMin[range]) ) ) {
+												debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
+													<< " Range=" << dec << range
+													<< " Bad gain value=" << grCalib->GetFunction("pol1")->GetParameter(1) << endl;
+												badGain[kpix][channel] = true;
+												badGainFitCnt++;
+											}
+			
+											// Determine bad channel from fitted chisq
+											if ( findBadGainChisq && (chisqNdf >  gainChisq) ) {
+												debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
+													<< " Range=" << dec << range
+													<< " Bad gain chisq=" << gainChisq << endl;
+												badGain[kpix][channel] = true;
+												badGainChisqCnt++;
+											}
+										}
+										else 
+										{
+											csv << ",0,0,0,0,0";
+											if ( findBadGainFit || findBadGainChisq ) 
+											{
+												debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel << " Bucket=" << dec << bucket
+													<< " Range=" << dec << range
+													<< " Failed to fit gain" << endl;
+												badGain[kpix][channel] = true;
+												failedGainFit++;
+											}
+										}
+			
+										addDoubleToXml(&xml,15,"CalibGainRms",grCalib->GetRMS(2));
+										csv << "," << grCalib->GetRMS(2);
+			
+										if ( crossString.str() != "" ) addStringToXml(&xml,15,"CalibCrossTalk",crossString.str());
+										csv << crossStringCsv.str();
+									}
+									csv << endl; 
+									xml << "            </Range>" << endl;
+								}
+							}
+						xml << "         </Bucket>" << endl;
+						}
+					}
+	
+				// Determine if the channel is bad
+	
+				badValue = 0;
+				if ( badMean[kpix][channel] ) badValue |= 0x1;
+				if ( badGain[kpix][channel] ) badValue |= 0x2;
+	
+				if ( badValue != 0 ) {
+					debug << "Kpix=" << dec << kpix << " Channel=" << dec << channel
+							<< " Marking channel bad." << endl;
+					badChannelCnt++;
+				}
+	
+				xml << "         <BadChannel>" << dec << badValue << "</BadChannel>" << endl;
+				xml << "      </Channel>" << endl;
+				}
+			}
+         xml << "   </kpixAsic>" << endl;
       }
-      xml << "   </kpixAsic>" << endl;
-    }
-  }
-  summary2->Write();
-  summary2_1->Write();
-  RMSfc_v_channel->Write();
-  summary3->Write();
-  summary4->Write();
-  summary12->Write();
-  summary13->Write();
-  summary14->Write();
-  
-  TGraphErrors *summ_resid = new TGraphErrors(x);
-  
-  for ( x=0; x<grCount; x++ ) {
-    resid[x]->Fit("gaus","q");
-    resid[x]->Write();
-    
-    // create TGraph with mean and errors of the gaus fits
-    // try to get charges for the x axis
-    //     resid[x]->GetFunction("gaus")->GetParameter(1); // fit mean
-    //     resid[x]->GetFunction("gaus")->GetParameter(2); // fit sigma
-    //grX
-    //     SetPoint(np, x, y); //np starts from 0
-    summ_resid->SetPoint(x, grX[x], resid[x]->GetFunction("gaus")->GetParameter(1));
-    summ_resid->SetPointError(x, 0, resid[x]->GetFunction("gaus")->GetParameter(2)); 
-  }
-  
-  summ_resid->Draw("Ap");
-  summ_resid->Write();
-  
-  
-  cout << endl;
-  cout << "Wrote root plots to " << outRoot << endl;
-  cout << "Wrote xml data to " << outXml << endl;
-  cout << "Wrote csv data to " << outCsv << endl;
-  cout << endl;
-  
-  cout << "Found " << dec << setw(10) << setfill(' ') << badTimes        << " events with bad times" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << goodTimes        << " events with good times" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << badMeanFitCnt   << " bad mean fit values" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << badMeanChisqCnt << " bad mean fit chisq"  << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << badMeanHistCnt  << " bad mean hist values" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << failedMeanFit   << " failed mean fits" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << badGainFitCnt   << " bad gain fit values" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << badGainChisqCnt << " bad gain fit chisq" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << failedGainFit   << " failed gain fits" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << badChannelCnt   << " bad channels" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << noiseSigmaCnt   << " large sigma" << endl;
-  cout << "Found " << dec << setw(10) << setfill(' ') << errorSigmaCnt   << " sigma below error" << endl;
-  
-  xml << "</calibrationData>" << endl;
-  xml.close();
-	rFile->Write();
-	gROOT->GetListOfFiles()->Remove(rFile); //delete cross links that make production of subfolder structure take forever
-	rFile->Close();
-  delete rFile;
-  cout << " - EVENT COUNT: " << eventCount
-       << "\n - Pedestal Evts =  " << Baseline_eventCount
-       << "\n - Calib Evts = " << Inject_eventCount
-       << endl;
-  
-  // Cleanup
-  for (kpix=0; kpix < 32; kpix++) {
-    for (channel=0; channel < 1024; channel++) {
-      for (bucket=0; bucket < 4; bucket++) {
-	if ( chanData[kpix][channel][bucket][0] != NULL ) delete chanData[kpix][channel][bucket][0];
-	if ( chanData[kpix][channel][bucket][1] != NULL ) delete chanData[kpix][channel][bucket][1];
+   }
+   cout << endl;
+   cout << "Wrote root plots to " << outRoot << endl;
+   cout << "Wrote xml data to " << outXml << endl;
+   cout << "Wrote csv data to " << outCsv << endl;
+   cout << endl;
+
+   cout << "Found " << dec << setw(10) << setfill(' ') << badTimes        << " events with bad times" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << badMeanFitCnt   << " bad mean fit values" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << badMeanChisqCnt << " bad mean fit chisq"  << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << badMeanHistCnt  << " bad mean hist values" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << failedMeanFit   << " failed mean fits" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << badGainFitCnt   << " bad gain fit values" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << badGainChisqCnt << " bad gain fit chisq" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << failedGainFit   << " failed gain fits" << endl;
+   cout << "Found " << dec << setw(10) << setfill(' ') << badChannelCnt   << " bad channels" << endl;
+
+   xml << "</calibrationData>" << endl;
+   xml.close();
+   rFile->Write();
+   delete rFile;
+
+   // Cleanup
+   for (kpix=0; kpix < 32; kpix++) {
+      for (channel=0; channel < 1024; channel++) {
+         for (bucket=0; bucket < 4; bucket++) {
+            if ( chanData[kpix][channel][bucket][0] != NULL ) delete chanData[kpix][channel][bucket][0];
+            if ( chanData[kpix][channel][bucket][1] != NULL ) delete chanData[kpix][channel][bucket][1];
+         }
       }
-    }
-  }
-  
-  // Close file
-  dataRead.close();
-  channel_file_bad.close();
-  channel_file_bad_fit.close();
-  cout << "Writing noisy channel numbers to: ./channel_list_noise.txt" << endl;
-  channel_file_noise.close();
-  channel_file_calib.close();
-  channel_file_adc_mean.close();
-  return(0);
+   }
+
+   // Close file
+   dataRead.close();
+   return(0);
 }
-
