@@ -102,30 +102,88 @@ int main ( int argc, char **argv )
 ////////////////
 // SETTING A STYLE 
 /////////////////
-	//TStyle *MyStyle = new TStyle("MyStyle","My Style");
-	////MyStyle->SetCanvasBorderMode(0);
-	////MyStyle->SetCanvasColor(10);
-	////MyStyle->SetPadBorderMode(0);
-	////MyStyle->SetPadColor(10);
-	////MyStyle->SetPadBottomMargin(0.15);
-	////MyStyle->SetPadLeftMargin(0.15);
-	////MyStyle->SetPaperSize(18,24);
-	//MyStyle->SetLabelSize(0.06,"XY");
-	////MyStyle->SetLabelOffset(0.01,"Y");
-	//MyStyle->SetTitleOffset(0.7,"Y");
-	//MyStyle->SetTitleOffset(0.9,"X");
-	//MyStyle->SetTitleSize(0.06,"XY");
-	////MyStyle->SetStatFont(42);
-	////MyStyle->SetStatBorderSize(1);
-	////MyStyle->SetStatColor(10);
-	////MyStyle->SetStatFontSize(0.08);
-	////MyStyle->SetTitleBorderSize(1);
-	////MyStyle->SetTitleFont(62);
-	//MyStyle->SetTitleFontSize(0.08);
+	//TStyle* ildStyle = new  TStyle("ildStyle", "ILD Style");
+
+	////set the background color to white
+	//ildStyle->SetFillColor(10);
+	//ildStyle->SetFrameFillColor(10);
+	//ildStyle->SetCanvasColor(10);
+	//ildStyle->SetPadColor(10);
+	//ildStyle->SetTitleFillColor(0);
+	//ildStyle->SetStatColor(10);
 	
-	////MyStyle->SetTitleColor(10);
-	//MyStyle->SetOptStat(10);
-	//gROOT->SetStyle("MyStyle");
+	////dont put a colored frame around the plots
+	//ildStyle->SetFrameBorderMode(0);
+	//ildStyle->SetCanvasBorderMode(0);
+	//ildStyle->SetPadBorderMode(0);
+	//ildStyle->SetLegendBorderSize(0);
+	
+	////use the primary color palette
+	//ildStyle->SetPalette(1,0);
+	
+	////set the default line color for a histogram to be black
+	//ildStyle->SetHistLineColor(kBlack);
+	
+	////set the default line color for a fit function to be red
+	//ildStyle->SetFuncColor(kRed);
+	
+	////make the axis labels black
+	//ildStyle->SetLabelColor(kBlack,"xyz");
+	
+	////set the default title color to be black
+	//ildStyle->SetTitleColor(kBlack);
+	
+	////set the margins
+	//ildStyle->SetPadBottomMargin(0.18);
+	//ildStyle->SetPadTopMargin(0.08);
+	//ildStyle->SetPadRightMargin(0.08);
+	//ildStyle->SetPadLeftMargin(0.17);
+	
+	////set axis label and title text sizes
+	//ildStyle->SetLabelFont(42,"xyz");
+	//ildStyle->SetLabelSize(0.06,"xyz");
+	//ildStyle->SetLabelOffset(0.015,"xyz");
+	//ildStyle->SetTitleFont(42,"xyz");
+	//ildStyle->SetTitleSize(0.07,"xyz");
+	//ildStyle->SetTitleOffset(1.1,"yz");
+	//ildStyle->SetTitleOffset(1.0,"x");
+	//ildStyle->SetStatFont(42);
+	//ildStyle->SetStatFontSize(0.07);
+	//ildStyle->SetTitleBorderSize(0);
+	//ildStyle->SetStatBorderSize(0);
+	//ildStyle->SetTextFont(42);
+	
+	////set line widths
+	//ildStyle->SetFrameLineWidth(2);
+	//ildStyle->SetFuncWidth(2);
+	//ildStyle->SetHistLineWidth(2);
+	
+	////set the number of divisions to show
+	//ildStyle->SetNdivisions(506, "xy");
+	
+	////turn off xy grids
+	//ildStyle->SetPadGridX(0);
+	//ildStyle->SetPadGridY(0);
+	
+	////set the tick mark style
+	//ildStyle->SetPadTickX(1);
+	//ildStyle->SetPadTickY(1);
+	
+	////turn off stats
+	//ildStyle->SetOptStat(0);
+	//ildStyle->SetOptFit(0);
+	
+	////marker settings
+	//ildStyle->SetMarkerStyle(20);
+	//ildStyle->SetMarkerSize(0.7);
+	//ildStyle->SetLineWidth(2); 
+	
+	////done
+	//ildStyle->cd();
+	//gROOT->ForceStyle();
+	//gStyle->ls();
+	
+	
 
 	
 	//////////////////////////////////////////
@@ -523,13 +581,13 @@ int main ( int argc, char **argv )
 	
 			tmp.str("");
 			tmp << "timestamp_kpix_k_" << kpix  << "_total";
-			times_kpix[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
+			times_kpix[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 8192,-0.5, 8191.5);
 			tmp.str("");
 			tmp << "timestamp_kpix_k_" << kpix  << "_monster_total";
-			times_kpix_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
+			times_kpix_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 8192,-0.5, 8191.5);
 			tmp.str("");
 			tmp << "timestamp_kpix_k_" << kpix  << "_no_monster_total";
-			times_kpix_no_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
+			times_kpix_no_monster[kpix][4] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 8192,-0.5, 8191.5);
 			tmp.str("");
 			tmp << "trig_count_k" << kpix << "_total";
 			trig_count[kpix][4]  = new TH1F (tmp.str().c_str(), "trig_count;  #triggered channels; #entries/#acq.cycles",1024, -0.5, 1023.5);
@@ -573,16 +631,16 @@ int main ( int argc, char **argv )
 				channel_entries_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel Entries; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
 				tmp.str("");
 				tmp << "timestamp_kpix_k_" << kpix << "_b" << bucket;
-				times_kpix[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
+				times_kpix[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 8192,-0.5, 8191.5);
 				tmp.str("");
 				tmp << "timestamp_kpix_monster_k_" << kpix << "_b" << bucket;
-				times_kpix_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
+				times_kpix_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 8192,-0.5, 8191.5);
 				tmp.str("");
 				tmp << "trig_count_k" << kpix << "_b" << bucket ;
 				trig_count[kpix][bucket]  = new TH1F(tmp.str().c_str(), "trig_count;  #triggered channels; #entries/#acq.cycles",1024, -0.5,1023.5);
 				tmp.str("");
 				tmp << "timestamp_kpix_k_" << kpix << "_b" << bucket << "_no_monster";
-				times_kpix_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 300,-0.5, 8191.5);
+				times_kpix_no_monster[kpix][bucket] = new TH1F(tmp.str().c_str(), "timestamp_kpix; time [#bunch_clk_count]; #entries/#acq.cycles", 8192,-0.5, 8191.5);
 			}
 			FolderName.str("");
 			FolderName << "cycles";
@@ -689,7 +747,7 @@ int main ( int argc, char **argv )
 							tmp_units << "_k" << dec << kpix;
 							tmp_units << "; Time/bunchClkCount; #entries/#acq.cycles";
 	
-							channel_time[kpix][channel][bucket][0] = new TH1F(tmp.str().c_str(),tmp_units.str().c_str(),300, -0.5,8191.5);
+							channel_time[kpix][channel][bucket][0] = new TH1F(tmp.str().c_str(),tmp_units.str().c_str(),8192, -0.5,8191.5);
 	
 	
 							tmp.str("");
@@ -993,6 +1051,12 @@ int main ( int argc, char **argv )
 	
 	cout << endl <<  "An event is currently classified as a monster if the amount of triggers one acquisition clock within a cycle is above " << monster_finder_limit << endl;
 	cout << "_______________________________________________________________" << endl;
+	
+	ofstream emptybinfile;
+	emptybinfile.open ("/home/lycoris-dev/Desktop/emptybinfile.txt");
+	
+  
+	
 	for (kpix = 0; kpix < 32; kpix++)
 	{
 		if (kpixFound[kpix])
@@ -1000,8 +1064,21 @@ int main ( int argc, char **argv )
 			cout << "Number of monster events in " << kpix << " = " << monster_counter[kpix] << endl;
 			cout << "Number of normed monster events in " << kpix << " = " << monster_counter[kpix]*weight << endl;
 			cout << "Number of entries in KPiX" << kpix << " = " << channel_entries[kpix][4]->GetEntries() << endl << endl;
-		}
-	}
+			
+			for (int bin = 1; bin < 1025; bin++)  // bin 0 is the underflow, therefore need to start counting at 1. Bin == channel_address+1
+			{
+				if (channel_entries[kpix][4]->GetBinContent(bin) == 0 && emptybinfile.is_open()) 
+				{
+					emptybinfile << bin-1 << endl;
+				}
+				else if (!emptybinfile.is_open()) cout << "error" << endl;
+			}
+		}	
+		
+	}	
+	cout << "Saved the empty bins to file /home/lycoris-dev/Desktop/emptybinfile.txt" << endl ;
+	emptybinfile.close();
+	
 	
 	//for (int k = 0; k < 1024; k++)
 	//{
