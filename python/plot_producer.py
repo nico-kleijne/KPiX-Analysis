@@ -33,7 +33,7 @@ def loopdir(keys):  # loop through all subdirectories of the root file and add a
 							for kpix in args.kpix:
 								if ((name in key_object.GetName()) \
 								and (key_object.ReadObj().GetEntries() != 0) \
-								and ('c'+str(channel)+'_' in key_object.GetName() or channel == 9999) and ('b'+str(bucket)+'_' in key_object.GetName() or bucket == 9999) and ('k'+str(kpix)+'_' in key_object.GetName() or kpix == 9999)):
+								and ('c'+str(channel)+'_' in key_object.GetName() or channel == 9999) and ('b'+str(bucket)+'_' in key_object.GetName() or bucket == 9999) and ('k'+str(kpix) in key_object.GetName() or kpix == 9999)):
 									print 'Histogram found: ', key_object.GetName()
 									hist_list.append(key_object)
 						#if ((name in key_object.GetName()) and (key_object.ReadObj().GetEntries() != 0) and ('c'+str(channel) in key_object.GetName() or channel == 9999) and ('b'+str(args.test1) in key_object.GetName() or args.test1 == 9999 or 'b'+str(args.test2) in key_object.GetName())):
