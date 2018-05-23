@@ -621,26 +621,25 @@ int main ( int argc, char **argv ) {
 	TDirectory *General_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
 	General_folder->cd(); // move into subdirectory
   
-	TH1F *summary1 = new TH1F("Pedestals_dac", "Pedestals [DAC]", 9000, 0, 9000);
-	TH1F *summary2 = new TH1F("Slope", "Slope [DAC/fC]", 200, -100, 100);
-	TH1F *summary3 = new TH1F("Intercept", "Intercept [DAC]", 2000, -1000, 1000);
-	TH1F *summary4 = new TH1F("Pedestals_fc", "Pedestals [fC]", 1000, -100, 100);
+	TH1F *summary1 = new TH1F("pedestals_dac", "Pedestals distribution; Charge [ADC]; #entries", 9000, 0, 9000);
+	TH1F *summary2 = new TH1F("slope", "Slope distribution; Slope [ADC/fC]; #entries", 200, -100, 100);
+	TH1F *summary3 = new TH1F("slope_residual", "Slope_residual; Slope_residual[ADC/fC]; #entries", 2000, -100, 100);
+	TH1F *summary4 = new TH1F("pedestals_fc", "Pedestals distribution; Charge [fC]; #entries", 1000, -100, 100);
 	
-	TH1F *summary11 = new TH1F("PedestalsRMS", "Pedestal RMS", 200, 0, 20);
-	TH1F *summary111= new TH1F("PedestalRMS|AmplitudeCorrected", "Corrected Pedestal RMS", 200, 0, 0.1);
-	TH1F *summary12 = new TH1F("SlopeRMS", "Slope RMS", 1000, 0, 20);
-	TH1F *summary13 = new TH1F("InterceptRMS", "Intecept RMS", 1000, 0, 100);
-	TH1F *summary14 = new TH1F("PedestalsRMS_fc", "Pedestals RMS [fC]", 1000, 0, 10);
+	TH1F *summary11 = new TH1F("pedestalsRMS", "Pedestal RMS; Charge [ADC]; #entries", 200, 0, 20);
+	TH1F *summary12 = new TH1F("slopeRMS", "Slope RMS; Slope [ADC/fC]; #entries", 1000, 0, 20);
+	TH1F *summary13 = new TH1F("slope_residualRMS", "Slope_residualRMS; Slope_residual[ADC/fC]; #entries", 1000, 0, 100);
+	TH1F *summary14 = new TH1F("pedestalsRMS_fc", "Pedestals RMS; Charge [fC]; #entries", 1000, 0, 10);
 	
-	TH1F *summary2_1 = new TH1F("Slope_vs_channel", "Slope [DAC/fC]; Channel ID; Slope [DAC/fC]", 1024, -0.5, 1023.5);
+	TH1F *summary2_1 = new TH1F("slope_vs_channel", "Slope [ADC/fC]; Channel ID; Slope [ADC/fC]", 1024, -0.5, 1023.5);
 	TH1F *RMSfc_v_channel = new TH1F("RMSfc_vs_channel", "; Channel ID; RMS [fC]", 1024, -0.5, 1023.5);
 
-	TH1F *PedestalsRMS_fc0 = new TH1F("PedestalsRMS_fc0", "Pedestals RMS, All Chn; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_disc = new TH1F("PedestalsRMS_fc0_disc", "Pedestals RMS, disc. Chn; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0 = new TH1F("pedestalsRMS_fc0", "Pedestals RMS, All Chn; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0_disc = new TH1F("pedestalsRMS_fc0_disc", "Pedestals RMS, disc. Chn; [fC]; a.u.", 1000, 0, 2);
 	
-	TH1F *PedestalsRMS_fc0_conn = new TH1F("PedestalsRMS_fc0_conn", "Pedestals RMS, conn. Chn; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_conn_120 = new TH1F("PedestalsRMS_fc0_conn_120", "Pedestals RMS, conn. Chn in 0-128; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_conn_800 = new TH1F("PedestalsRMS_fc0_conn_800", "Pedestals RMS, conn. Chn after 128; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0_conn = new TH1F("pedestalsRMS_fc0_conn", "Pedestals RMS, conn. Chn; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0_conn_120 = new TH1F("pedestalsRMS_fc0_conn_120", "Pedestals RMS, conn. Chn in 0-128; [fC]; a.u.", 1000, 0, 2);
+	TH1F *PedestalsRMS_fc0_conn_800 = new TH1F("pedestalsRMS_fc0_conn_800", "Pedestals RMS, conn. Chn after 128; [fC]; a.u.", 1000, 0, 2);
 		
 	//TH1F *PedestalsRMS_fc2 = new TH1F("PedestalsRMS_fc2", "Pedestals RMS [fC]", 1000, 0, 10);
 	//TH1F *PedestalsRMS_fc3 = new TH1F("PedestalsRMS_fc3", "Pedestals RMS [fC]", 1000, 0, 10);
@@ -731,7 +730,6 @@ int main ( int argc, char **argv ) {
 		    summary1->Fill(chanData[kpix][channel][bucket][range]->baseFitMean);
 		    channel_file_adc_mean << chanData[kpix][channel][bucket][range]->baseFitMean << " " << channel << " " << bucket << endl;
 		    summary11->Fill(chanData[kpix][channel][bucket][range]->baseFitSigma);
-		    summary111->Fill(chanData[kpix][channel][bucket][range]->baseFitSigma/chanData[kpix][channel][bucket][range]->baseFitMean);
 		    if ( hist->GetFunction("gaus")->GetNDF() == 0 ) {
 		      chanData[kpix][channel][bucket][range]->baseFitChisquare = 0;
 		    } else {
@@ -803,7 +801,6 @@ int main ( int argc, char **argv ) {
   }
   summary1->Write();
   summary11->Write();
-  summary111->Write();
   cout << endl;
   
    //////////////////////////////////////////
