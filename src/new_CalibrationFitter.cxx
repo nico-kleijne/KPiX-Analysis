@@ -35,7 +35,9 @@
 #include <math.h>
 #include <fstream>
 #include <XmlVariables.h>
-#include "kpix_left.h"
+
+#include "kpixmap.h"
+#include "kpix_left_and_right.h"
 
 using namespace std;
 
@@ -302,8 +304,10 @@ int main ( int argc, char **argv ) {
 
  // bool                    printalot=false;
 
- unordered_map<uint, uint> kpix2strip;
- kpix2strip = kpix_left();
+	unordered_map<uint, uint> kpix2strip_left;
+	unordered_map<uint, uint> kpix2strip_right;
+	kpix2strip_left = kpix_left();
+	kpix2strip_right = kpix_right();
   
   // Init structure
   for (kpix=0; kpix < 32; kpix++) {
@@ -629,17 +633,20 @@ int main ( int argc, char **argv ) {
 	TH1F *summary11 = new TH1F("pedestalsRMS", "Pedestal RMS; Charge [ADC]; #entries", 200, 0, 20);
 	TH1F *summary12 = new TH1F("slopeRMS", "Slope RMS; Slope [ADC/fC]; #entries", 1000, 0, 20);
 	TH1F *summary13 = new TH1F("slope_residualRMS", "Slope_residualRMS; Slope_residual[ADC/fC]; #entries", 1000, 0, 100);
-	TH1F *summary14 = new TH1F("pedestalsRMS_fc", "Pedestals RMS; Charge [fC]; #entries", 1000, 0, 10);
 	
 	TH1F *summary2_1 = new TH1F("slope_vs_channel", "Slope [ADC/fC]; Channel ID; Slope [ADC/fC]", 1024, -0.5, 1023.5);
-	TH1F *RMSfc_v_channel = new TH1F("RMSfc_vs_channel", "; Channel ID; RMS [fC]", 1024, -0.5, 1023.5);
-
-	TH1F *PedestalsRMS_fc0 = new TH1F("pedestalsRMS_fc0", "Pedestals RMS, All Chn; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_disc = new TH1F("pedestalsRMS_fc0_disc", "Pedestals RMS, disc. Chn; [fC]; a.u.", 1000, 0, 2);
+	TH1F *RMSfc_v_channel = new TH1F("RMSfc_vs_channel", "; Channel_ID; RMS [fC]", 1024, -0.5, 1023.5);
+	TH1F *RMSfc_v_channel_connected = new TH1F("RMSfc_vs_channel_connected", "; Channel_ID; RMS [fC]", 1024, -0.5, 1023.5);
 	
-	TH1F *PedestalsRMS_fc0_conn = new TH1F("pedestalsRMS_fc0_conn", "Pedestals RMS, conn. Chn; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_conn_120 = new TH1F("pedestalsRMS_fc0_conn_120", "Pedestals RMS, conn. Chn in 0-128; [fC]; a.u.", 1000, 0, 2);
-	TH1F *PedestalsRMS_fc0_conn_800 = new TH1F("pedestalsRMS_fc0_conn_800", "Pedestals RMS, conn. Chn after 128; [fC]; a.u.", 1000, 0, 2);
+	TH1F *RMSfc_v_strip_left = new TH1F("RMSfc_vs_strip_left", "; Strip_number; RMS [fC]", 920, -0.5, 919.5);
+	TH1F *RMSfc_v_strip_right = new TH1F("RMSfc_vs_strip_right", "; Strip_number; RMS [fC]", 920, 919.5, 1839.5);
+
+	TH1F *PedestalsRMS_fc0 = new TH1F("pedestalsRMS_fc0", "Pedestals RMS, All Chn; [fC]; a.u.", 1000, 0, 4);
+	TH1F *PedestalsRMS_fc0_disc = new TH1F("pedestalsRMS_fc0_disc", "Pedestals RMS, disc. Chn; [fC]; a.u.", 1000, 0, 4);
+	
+	TH1F *PedestalsRMS_fc0_conn = new TH1F("pedestalsRMS_fc0_conn", "Pedestals RMS, conn. Chn; [fC]; a.u.", 1000, 0, 4);
+	TH1F *PedestalsRMS_fc0_conn_120 = new TH1F("pedestalsRMS_fc0_conn_120", "Pedestals RMS, conn. Chn in 0-128; [fC]; a.u.", 1000, 0, 4);
+	TH1F *PedestalsRMS_fc0_conn_800 = new TH1F("pedestalsRMS_fc0_conn_800", "Pedestals RMS, conn. Chn after 128; [fC]; a.u.", 1000, 0, 4);
 		
 	//TH1F *PedestalsRMS_fc2 = new TH1F("PedestalsRMS_fc2", "Pedestals RMS [fC]", 1000, 0, 10);
 	//TH1F *PedestalsRMS_fc3 = new TH1F("PedestalsRMS_fc3", "Pedestals RMS [fC]", 1000, 0, 10);
@@ -968,10 +975,9 @@ int main ( int argc, char **argv ) {
 											double ped_charge_err = (chanData[kpix][channel][bucket][range]->baseHistRMS) / slope ; // simple err
 			
 											summary4->Fill( ped_charge * pow(10,15) );
-											summary14->Fill( ped_charge_err * pow(10,15) );
 											
 											PedestalsRMS_fc0->Fill( ped_charge_err * pow(10,15) );
-											if ( kpix2strip.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err * pow(10,15) );
+											if ( kpix2strip_left.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err * pow(10,15) );
 											else{
 											if (channel < 128) PedestalsRMS_fc0_conn_120 -> Fill(ped_charge_err * pow(10,15));
 											else PedestalsRMS_fc0_conn_800 -> Fill(ped_charge_err * pow(10,15));
@@ -987,7 +993,16 @@ int main ( int argc, char **argv ) {
 											summary2->Fill( slope / pow(10,15) );
 											
 											summary2_1->SetBinContent( channel+1, slope / pow(10,15));
-											if (abs(ped_charge_err * pow(10,15)) < 20) RMSfc_v_channel->SetBinContent(channel, ped_charge_err * pow(10,15));
+											if (abs(ped_charge_err * pow(10,15)) < 20)
+											{
+												RMSfc_v_channel->SetBinContent(channel, ped_charge_err * pow(10,15));
+												if (kpix2strip_left.at(channel) != 9999) RMSfc_v_channel_connected->SetBinContent(channel, ped_charge_err * pow(10,15));
+												RMSfc_v_strip_left->SetBinContent(kpix2strip_left.at(channel), ped_charge_err * pow(10,15));
+												RMSfc_v_strip_right->SetBinContent(kpix2strip_right.at(channel)-920, ped_charge_err * pow(10,15)); //as we set bin content need to move everything to the left by as channel 920 is bin 0
+												
+												//cout << kpix2strip_right.at(channel) << endl;
+												
+											}
 											//summary2_1->Fill( channel, slope / pow(10,15) );
 											
 											summary3->Fill( offset);

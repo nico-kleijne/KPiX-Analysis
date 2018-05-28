@@ -573,10 +573,10 @@ int main ( int argc, char **argv )
 			channel_entries_no_strip[kpix][4] = new TH1F(tmp.str().c_str(), "Channel_Entries_no_strip; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
 			tmp.str("");
 			tmp << "Left_Strip_entries_k_" << kpix << "_total";
-			left_strip_entries[kpix][4] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 928,-0.5, 927.5);
+			left_strip_entries[kpix][4] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 920,-0.5, 919.5);
 			tmp.str("");
 			tmp << "Right_Strip_entries_k_" << kpix << "_total";
-			right_strip_entries[kpix][4] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 928, 927.5, 1855.5);
+			right_strip_entries[kpix][4] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 920, 919.5, 1839.5);
 	
 	
 			tmp.str("");
@@ -618,10 +618,10 @@ int main ( int argc, char **argv )
 				channel_entries_no_strip[kpix][bucket] = new TH1F(tmp.str().c_str(), "Channel_Entries_no_strip; KPiX_channel_address; #entries/#acq.cycles", 1024,-0.5, 1023.5);
 				tmp.str("");
 				tmp << "Left_Strip_entries_k_" << kpix << "_b" << bucket;
-				left_strip_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 928,-0.5, 927.5);
+				left_strip_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 920,-0.5, 919.5);
 				tmp.str("");
 				tmp << "Right_Strip_entries_k_" << kpix << "_b" << bucket;
-				right_strip_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 928, 927.5, 1855.5);
+				right_strip_entries[kpix][bucket] = new TH1F(tmp.str().c_str(), "Strip_Entries; Strip_address; #entries/#acq.cycles", 920, 919.5, 1839.5);
 	
 				tmp.str("");
 				tmp << "Channel_entries_k_" << kpix <<  "_b" << bucket << "_timed";
