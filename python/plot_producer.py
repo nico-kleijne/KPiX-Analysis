@@ -32,11 +32,19 @@ def loopdir(keys):  # loop through all subdirectories of the root file and add a
 						for channel in args.channel:	
 							for bucket in args.bucket:
 								for kpix in args.kpix:
-									if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
-									and (key_object.ReadObj().GetEntries() != 0) \
-									and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b'+str(bucket)+'_' in key_object.GetName() or bucket == 9999) and ('k'+str(kpix) in key_object.GetName() or kpix == 9999)):
-										#print 'Histogram found: ', key_object.GetName()
-										hist_list.append(key_object)
+									if (bucket == 4):
+										if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
+										and (key_object.ReadObj().GetEntries() != 0) \
+										and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b' not in key_object.GetName()) and ('k'+str(kpix) in key_object.GetName() or 'k_'+str(kpix) in key_object.GetName() or kpix == 9999)):
+											#print 'Histogram found: ', key_object.GetName()
+											hist_list.append(key_object)
+									else:
+										if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
+										and (key_object.ReadObj().GetEntries() != 0) \
+										and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b'  in key_object.GetName() or bucket == 9999) and ('k'+str(kpix) in key_object.GetName() or 'k_'+str(kpix) in key_object.GetName() or kpix == 9999)):
+											#print 'Histogram found: ', key_object.GetName()
+											hist_list.append(key_object)
+									
 	
 
 
@@ -130,13 +138,6 @@ ROOT.gStyle.ls()
 
 
 
-
-
-
-
-
-
-
 parser = argparse.ArgumentParser() #Command line argument parser.
 parser.add_argument('file_in', nargs='+', help='name of the input file')
 parser.add_argument('-n', '--name', dest='name', default=['everything'], nargs='*',  help='used to specify the name of the plot which should be used')
@@ -147,8 +148,9 @@ parser.add_argument('-d', '--draw', dest='draw_option', default='hist e', help='
 parser.add_argument('-o', '--output', dest='output_name', default='test.png', help='specifies the name and type of the output file (e.g. test.png, comparison.root etc...')
 parser.add_argument('-f', '--refuse', dest='refuse', default= ['nothing'], nargs='*', help='add string that should be exluded from histogram search')
 parser.add_argument('-r', '--rebin', dest='rebin', default=1, type = int, help='add number to rebin the histograms.')
-parser.add_argument('--xrange', dest='xaxisrange', default=[9999], nargs='*', type=int, help='set an xrange for the plot to used with xmin xmax as the two arguments')
-parser.add_argument('--multifile', dest='multifile', help='name of secondary input file')
+parser.add_argument('--xrange', dest='xaxisrange', default=[9999], nargs='*', type=float, help='set a xrange for the plot to used with xmin xmax as the two arguments')
+parser.add_argument('--yrange', dest='yaxisrange', default=[9999], nargs='*', type=float, help='set a yrange for the plot to used with ymin ymax as the two arguments')
+parser.add_argument('--legend', dest='legend', nargs='*', help='list of names to be used as legend titles instead of the default filename+histogram name')
 
 args = parser.parse_args()
 print ''
@@ -167,23 +169,13 @@ for x in root_file_list:
 	loopdir(key_root)
 	
 	
-#print 'Reading file: ', filename
-#key_root = root_file.GetListOfKeys()
-#loopdir(key_root)
 
-
-if (args.multifile):
-	root_file2 = ROOT.TFile(args.multifile)
-	filename2 = args.multifile[args.multifile.find('/20')+1:args.multifile.rfind('.bin')]
-	print 'Reading second file: ', filename2
-	key_root2 = root_file2.GetListOfKeys()
-	loopdir(key_root2)
 	
 print 'Looking for histograms'
 print '----------------------'
 print 'Name contains ', args.name
 print 'Channel [9999 = everything] ',args.channel
-print 'Bucket [9999 = everything] ',args.bucket
+print 'Bucket [9999 = everything; 4 = only total] ',args.bucket
 print 'KPiX [9999 = everything] ',args.kpix
 
 print 'Number of histograms found is: ', len(hist_list)
@@ -201,6 +193,8 @@ if ('same' in args.draw_option):
 	y_title = None
 	x_low = None
 	x_high = None
+	y_low = None
+	y_high = None
 	for histogram in hist_list:
 		obj = histogram.ReadObj()
 		x_axis = obj.GetXaxis()
@@ -225,6 +219,10 @@ if ('same' in args.draw_option):
 			x_low = args.xaxisrange[0]
 			x_high = args.xaxisrange[1]
 			x_axis.SetRangeUser(x_low, x_high)
+		if 9999 not in args.yaxisrange:
+			y_low = args.yaxisrange[0]
+			y_high = args.yaxisrange[1]
+			y_axis.SetRangeUser(y_low, y_high) 
 		#print x_low, x_high
 		#x_axis.SetRangeUser(x_low, x_high)
 		obj.SetLineColor(counter) #First will be black, second red, third green etc.
@@ -232,10 +230,13 @@ if ('same' in args.draw_option):
 		#obj.Draw(args.draw_option)
 		
 		hist_comp.Add(obj)
-		if len(filename_list) > 1:
-			legend.AddEntry(obj, filename_list[counter-1]+'_'+histogram.GetName())
+		if (not args.legend):
+			if len(filename_list) > 1:
+				legend.AddEntry(obj, filename_list[counter-1]+'_'+histogram.GetName())
+			else:
+				legend.AddEntry(obj, '_'+histogram.GetName())
 		else:
-			legend.AddEntry(obj, '_'+histogram.GetName())
+			legend.AddEntry(obj, args.legend[counter-1])
 		counter +=1
 		x_title = x_axis.GetTitle()
 		y_title = y_axis.GetTitle()
@@ -249,9 +250,14 @@ if ('same' in args.draw_option):
 	else:
 		xaxis.SetRangeUser(x_low, x_high)
 	yaxis = hist_comp.GetYaxis()
+	if 9999 not in args.yaxisrange:
+		yaxis.SetRangeUser(y_low, y_high) 
 	yaxis.SetTitle(y_title)
 	legend.Draw()
-	c1.SaveAs('/home/lycoris-dev/Documents/plots_for_SLAC_report/'+'_'+filename_list[0]+'_'args.output_name)
+	if ('test' not in args.output_name):
+		c1.SaveAs('/home/lycoris-dev/Documents/plots_for_SLAC_report/'+filename_list[0]+'_'+args.output_name)
+	else:
+		c1.SaveAs('/home/lycoris-dev/Documents/plots_for_SLAC_report/'+filename_list[0]+'_'+histogram.GetName()+'.png')
 	c1.Close()
 else:
 	
