@@ -13,7 +13,7 @@ import argparse
 import argcomplete
 from operator import add
 
-
+ROOT.gROOT.SetBatch(True)
 
 hist_list= []  #Global list of all chosen histograms
 histograms=[]
@@ -129,7 +129,6 @@ mystyle.SetLineWidth(2)
 
 #done
 mystyle.cd()
-ROOT.gROOT.SetBatch(1) # do not show histogram when drawing
 ROOT.gROOT.ForceStyle()
 ROOT.gStyle.ls()
 
@@ -152,7 +151,7 @@ parser.add_argument('--xrange', dest='xaxisrange', default=[9999], nargs='*', ty
 parser.add_argument('--yrange', dest='yaxisrange', default=[9999], nargs='*', type=float, help='set a yrange for the plot to used with ymin ymax as the two arguments')
 parser.add_argument('--legend', dest='legend', nargs='*', help='list of names to be used as legend titles instead of the default filename+histogram name')
 parser.add_argument('--ylog', dest='ylog', help='if given as an option, set y axis to logarithmic. Remember to set the yrange to start above 0!')
-parser.add_argument('--color', dest='color', default=[600, 632, 1, 616, 416, 432, 880, 860, 900, 800, 840], nargs='*', type=int, help='list of colors to be used')
+parser.add_argument('--color', dest='color', default=[600, 632, 1, 402, 416, 432, 880, 860, 900, 800, 840], nargs='*', type=int, help='list of colors to be used')
 
 args = parser.parse_args()
 print ''
@@ -182,141 +181,148 @@ print 'KPiX [9999 = everything] ',args.kpix
 
 print 'Number of histograms found is: ', len(hist_list)
 print hist_list	
-
-if (args.ylog):
+if (args.ylog and args.yaxisrange[0] is 0):
 	print 'Setting y axis to log, only works if the range was specified to start at y_min > 0'
 
-if ('same' in args.draw_option):
-	drawing_option = args.draw_option.replace('same', 'NOSTACK') #exchange the same with a NOSTACK as I am using THStack
-	#ROOT.gROOT.SetBatch(1)
-	c1 = ROOT.TCanvas( args.output_name, 'Test', 1200, 900 )
-	c1.cd()
-	c1.SetFillColor(0)
-	legend = ROOT.TLegend(0.25,0.88,0.85,0.7)
-	hist_comp = ROOT.THStack()
-	counter = 1
-	x_title = None
-	y_title = None
-	x_low = None
-	x_high = None
-	y_low = None
-	y_high = None
-	for histogram in hist_list:
-		obj = histogram.ReadObj()
-		x_axis = obj.GetXaxis()
-		y_axis = obj.GetYaxis()
-		if (args.rebin is not 1):
-				obj.Rebin(args.rebin)
-		if 9999 in args.xaxisrange:
-			if (x_low is None):
-				x_low = obj.FindFirstBinAbove(0)-10
-			elif (x_low > obj.FindFirstBinAbove(0)-10):
-				x_low = obj.FindFirstBinAbove(0)-10
-			if (x_high is None):
-				x_high = obj.FindLastBinAbove(0)+10
-			elif (x_high < obj.FindLastBinAbove(0)+10):
-				x_high = obj.FindLastBinAbove(0)+10
-			if (x_high > obj.GetNbinsX()):  #avoids overflow bin
-				x_high = obj.GetNbinsX()
-			if (x_low <= 0): #avoids underflow bin
-				x_low = 1
-			x_axis.SetRange(x_low, x_high)
-		else:
-			x_low = args.xaxisrange[0]
-			x_high = args.xaxisrange[1]
-			x_axis.SetRangeUser(x_low, x_high)
-		if 9999 not in args.yaxisrange:
-			y_low = args.yaxisrange[0]
-			y_high = args.yaxisrange[1]
-			y_axis.SetRangeUser(y_low, y_high) 
-		#print x_low, x_high
-		#x_axis.SetRangeUser(x_low, x_high)
-		obj.SetLineColor(args.color[counter-1])
-		obj.SetMarkerColor(args.color[counter-1])
-		#obj.Draw(args.draw_option)
-		
-		hist_comp.Add(obj)
-		if (not args.legend):
-			if len(filename_list) > 1:
-				legend.AddEntry(obj, filename_list[counter-1]+'_'+histogram.GetName())
-			else:
-				legend.AddEntry(obj, '_'+histogram.GetName())
-		else:
-			legend.AddEntry(obj, args.legend[counter-1])
-		counter +=1
-		x_title = x_axis.GetTitle()
-		y_title = y_axis.GetTitle()
-	if args.ylog:
-		c1.SetLogy()
-		ROOT.gPad.SetLogy()
-	
-	hist_comp.Draw(drawing_option)
-	xaxis = hist_comp.GetXaxis()
-	xaxis.SetTitle(x_title)
-	print x_low
-	print x_high
-	if 9999 in args.xaxisrange:
-		xaxis.SetRange(x_low, x_high)
-	else:
-		xaxis.SetRangeUser(x_low, x_high)
-	yaxis = hist_comp.GetYaxis()
-	if 9999 not in args.yaxisrange:
-		yaxis.SetRangeUser(y_low, y_high) 
-	yaxis.SetTitle(y_title)
-	#if (args.ylog is True):
-	legend.Draw()
-	#ROOT.gROOT.SetBatch(0)
-	if ('test' not in args.output_name):
-		c1.SaveAs('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+args.output_name)
-	else:
-		c1.SaveAs('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+histogram.GetName()+'.png')
-	c1.Close()
-else:
-	
-	counter = 0
-	for histogram in hist_list:
-		#ROOT.gROOT.SetBatch(1)
-		c1 = ROOT.TCanvas( 'test', 'Test', 1200,900 ) #
-		obj = histogram.ReadObj()
-		x_axis = obj.GetXaxis()
-		y_axis = obj.GetYaxis()
+if len(hist_list) is not 0:
+	if ('same' in args.draw_option):
+		drawing_option = args.draw_option.replace('same', 'NOSTACK') #exchange the same with a NOSTACK as I am using THStack
+		c1 = ROOT.TCanvas( args.output_name, 'Test', 1200, 900 )
 		c1.cd()
-		#print obj.GetEntries()
-		if 9999 in args.xaxisrange:
-			x_high = obj.FindLastBinAbove(0)+10
-			if (x_high > obj.GetNbinsX()):  #avoids overflow bin
-				x_high = obj.GetNbinsX()
-			x_low = obj.FindFirstBinAbove(0)-10
-			if (x_low <= 0): #avoids underflow bin
-				x_low = 1
-			x_axis.SetRange(x_low, x_high)
-		else:
-			x_low = args.xaxisrange[0]
-			x_high = args.xaxisrange[1]
-			x_axis.SetRangeUser(x_low, x_high)
-		obj.SetLineColor(4) #Blue
-		if (args.rebin is not 1):
-			obj.Rebin(args.rebin)
+		c1.SetFillColor(0)
+		legend = ROOT.TLegend(0.25,0.88,0.85,0.7)
+		hist_comp = ROOT.THStack()
+		counter = 1
+		x_title = None
+		y_title = None
+		x_low = None
+		x_high = None
+		y_low = None
+		y_high = None
+		for histogram in hist_list:
+			
+			obj = histogram.ReadObj()
+			print 'Number of entries =', obj.GetEntries()
+			x_axis = obj.GetXaxis()
+			y_axis = obj.GetYaxis()
+			if (args.rebin is not 1):
+					obj.Rebin(args.rebin)
+			if 9999 in args.xaxisrange:
+				if (x_low is None):
+					x_low = obj.FindFirstBinAbove(0)-10
+				elif (x_low > obj.FindFirstBinAbove(0)-10):
+					x_low = obj.FindFirstBinAbove(0)-10
+				if (x_high is None):
+					x_high = obj.FindLastBinAbove(0)+10
+				elif (x_high < obj.FindLastBinAbove(0)+10):
+					x_high = obj.FindLastBinAbove(0)+10
+				if (x_high > obj.GetNbinsX()):  #avoids overflow bin
+					x_high = obj.GetNbinsX()
+				if (x_low <= 0): #avoids underflow bin
+					x_low = 1
+				x_axis.SetRange(x_low, x_high)
+			else:
+				x_low = args.xaxisrange[0]
+				x_high = args.xaxisrange[1]
+				x_axis.SetRangeUser(x_low, x_high)
+			if 9999 not in args.yaxisrange:
+				y_low = args.yaxisrange[0]
+				y_high = args.yaxisrange[1]
+				y_axis.SetRangeUser(y_low, y_high) 
+			#print x_low, x_high
+			#x_axis.SetRangeUser(x_low, x_high)
+			obj.SetLineColor(args.color[counter-1])
+			obj.SetMarkerColor(args.color[counter-1])
+			#obj.Draw(args.draw_option)
+			
+			hist_comp.Add(obj)
+			if (not args.legend):
+				if len(filename_list) > 1:
+					legend.AddEntry(obj, filename_list[counter-1]+'_'+histogram.GetName())
+				else:
+					legend.AddEntry(obj, '_'+histogram.GetName())
+			else:
+				legend.AddEntry(obj, args.legend[counter-1])
+			counter +=1
+			x_title = x_axis.GetTitle()
+			y_title = y_axis.GetTitle()
 		if args.ylog:
 			c1.SetLogy()
 			ROOT.gPad.SetLogy()
 		
-		obj.Draw(args.draw_option)
-		#ROOT.gROOT.SetBatch(0)
-		#raw_input('Press Enter to look at the next histogram')
-		if ('test' not in args.output_name):
-			c1.Print('/home/lycoris-dev/Documents/plots_june_2018/'+args.output_name)
-			print 'Creating /home/lycoris-dev/Documents/plots_june_2018/'+args.output_name
+		hist_comp.Draw(drawing_option)
+		xaxis = hist_comp.GetXaxis()
+		xaxis.SetTitle(x_title)
+		print x_low
+		print x_high
+		if 9999 in args.xaxisrange:
+			xaxis.SetRange(x_low, x_high)
 		else:
-			c1.Print('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+histogram.GetName()+'.png')
+			xaxis.SetRangeUser(x_low, x_high)
+		yaxis = hist_comp.GetYaxis()
+		if 9999 not in args.yaxisrange:
+			yaxis.SetRangeUser(y_low, y_high) 
+		yaxis.SetTitle(y_title)
+		#if (args.ylog is True):
+		legend.Draw()
+		if ('test' not in args.output_name):
+			print 'Creating /home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+args.output_name
+			c1.SaveAs('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+args.output_name)
+		else:
 			print 'Creating /home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+histogram.GetName()+'.png'
+			c1.SaveAs('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+histogram.GetName()+'.png')
 		c1.Close()
+	else:
 		
-		counter= counter+1
-
+		counter = 0
+		for histogram in hist_list:
+			
+			#ROOT.gROOT.SetBatch(1)
+			c1 = ROOT.TCanvas( 'test', 'Test', 1200,900 ) #
+			obj = histogram.ReadObj()
+			print 'Number of entries =', obj.GetEntries()
+			x_axis = obj.GetXaxis()
+			y_axis = obj.GetYaxis()
+			c1.cd()
+			#print obj.GetEntries()
+			if 9999 in args.xaxisrange:
+				x_high = obj.FindLastBinAbove(0)+10
+				if (x_high > obj.GetNbinsX()):  #avoids overflow bin
+					x_high = obj.GetNbinsX()
+				x_low = obj.FindFirstBinAbove(0)-10
+				if (x_low <= 0): #avoids underflow bin
+					x_low = 1
+				x_axis.SetRange(x_low, x_high)
+			else:
+				x_low = args.xaxisrange[0]
+				x_high = args.xaxisrange[1]
+				x_axis.SetRangeUser(x_low, x_high)
+			obj.SetLineColor(4) #Blue
+			if (args.rebin is not 1):
+				obj.Rebin(args.rebin)
+			if args.ylog:
+				c1.SetLogy()
+				ROOT.gPad.SetLogy()
+			
+			obj.Draw(args.draw_option)
+			#ROOT.gROOT.SetBatch(0)
+			#raw_input('Press Enter to look at the next histogram')
+			if ('test' not in args.output_name):
+				print 'Creating /home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+args.output_name
+				c1.SaveAs('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+args.output_name)
+			else:
+				print 'Creating /home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+histogram.GetName()+'.png'
+				c1.SaveAs('/home/lycoris-dev/Documents/plots_june_2018/'+filename_list[0]+'_'+histogram.GetName()+'.png')
+			c1.Close()
+			counter= counter+1
+else:
+	print 'There are NO valid histograms in the current selection'
+	print ''
+	print ''
 for x in root_file_list:
 	ROOT.gROOT.GetListOfFiles().Remove(x)
-	x.Close()
+
+
 
 #raw_input('Press Enter to look at the next histogram')
 
