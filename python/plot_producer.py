@@ -12,11 +12,21 @@ import ROOT
 import argparse
 import argcomplete
 from operator import add
+import sys
 
 ROOT.gROOT.SetBatch(True)
 
 hist_list= []  #Global list of all chosen histograms
 histograms=[]
+
+
+
+class MyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('error: %s\n' % message)
+        self.print_help()
+        sys.exit(2)
+
 
 def loopdir(keys):  # loop through all subdirectories of the root file and add all plots+histograms that contain the same string as given by the name, channel and bucket arguments to the global list of all chosen histograms hist_list
 	for key_object in keys:
@@ -26,24 +36,29 @@ def loopdir(keys):  # loop through all subdirectories of the root file and add a
 			if(args.name == 'everything' and key_object.ReadObj().GetEntries() != 0):
 				#print key_object.GetName()
 				hist_list.append(key_object)
-			else:	
-				for name in args.name:
-					for refuse in args.refuse:
-						for channel in args.channel:	
-							for bucket in args.bucket:
-								for kpix in args.kpix:
-									if (bucket == 4):
-										if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
-										and (key_object.ReadObj().GetEntries() != 0) \
-										and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b' not in key_object.GetName()) and ('k'+str(kpix) in key_object.GetName() or 'k_'+str(kpix) in key_object.GetName() or kpix == 9999)):
-											#print 'Histogram found: ', key_object.GetName()
-											hist_list.append(key_object)
-									else:
-										if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
-										and (key_object.ReadObj().GetEntries() != 0) \
-										and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b'+str(bucket) in key_object.GetName() or bucket == 9999) and ('k'+str(kpix) in key_object.GetName() or 'k_'+str(kpix) in key_object.GetName() or kpix == 9999)):
-											#print 'Histogram found: ', key_object.GetName()
-											hist_list.append(key_object)
+			else:
+				if args.exact:
+					for name in args.name:
+						if (name == key_object.GetName()): 
+							hist_list.append(key_object)
+				else:	
+					for name in args.name:
+						for refuse in args.refuse:
+							for channel in args.channel:	
+								for bucket in args.bucket:
+									for kpix in args.kpix:
+										if (bucket == 4):
+											if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
+											and (key_object.ReadObj().GetEntries() != 0) \
+											and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b' not in key_object.GetName()) and ('k'+str(kpix) in key_object.GetName() or 'k_'+str(kpix) in key_object.GetName() or kpix == 9999)):
+												#print 'Histogram found: ', key_object.GetName()
+												hist_list.append(key_object)
+										else:
+											if ((name in key_object.GetName() and refuse not in key_object.GetName()) \
+											and (key_object.ReadObj().GetEntries() != 0) \
+											and ('_c'+str(channel)+'_' in key_object.GetName() or channel == '9999') and ('b'+str(bucket) in key_object.GetName() or bucket == 9999) and ('k'+str(kpix) in key_object.GetName() or 'k_'+str(kpix) in key_object.GetName() or kpix == 9999)):
+												#print 'Histogram found: ', key_object.GetName()
+												hist_list.append(key_object)
 									
 	
 
@@ -137,30 +152,42 @@ ROOT.gStyle.ls()
 
 
 
-parser = argparse.ArgumentParser() #Command line argument parser.
+
+#parser = argparse.ArgumentParser() #Command line argument parser.
+parser = MyParser()
 parser.add_argument('file_in', nargs='+', help='name of the input file')
 parser.add_argument('-n', '--name', dest='name', default=['everything'], nargs='*',  help='used to specify the name of the plot which should be used')
 parser.add_argument('-c', '--channel', dest='channel', default=['9999'], nargs='*', help='used to specify the channel of the plot which should be used')
-parser.add_argument('-b', '--bucket', dest='bucket', default=[9999], nargs='*', type=int, help='used to specify the bucket of the plot which should be used')
-parser.add_argument('-k', '--kpix', dest='kpix', default=[9999], nargs='*', type=int, help='used to specify the bucket of the plot which should be used')
+parser.add_argument('-b', '--bucket', dest='bucket', default=[9999], nargs='*', type=int, help='used to specify the bucket of the plot which should be used | type=int')
+parser.add_argument('-k', '--kpix', dest='kpix', default=[9999], nargs='*', type=int, help='used to specify the bucket of the plot which should be used | type=int')
 parser.add_argument('-d', '--draw', dest='draw_option', default='hist e', help='specify the drawing option as given by the root draw option, needs to be given as a single string (e.g. hist same or hist same multifile')
 parser.add_argument('-o', '--output', dest='output_name', default='test.png', help='specifies the name and type of the output file (e.g. test.png, comparison.root etc...')
 parser.add_argument('-f', '--refuse', dest='refuse', default= ['nothing'], nargs='*', help='add string that should be exluded from histogram search')
-parser.add_argument('-r', '--rebin', dest='rebin', default=1, type = int, help='add number to rebin the histograms.')
-parser.add_argument('--xrange', dest='xaxisrange', default=[9999], nargs='*', type=float, help='set a xrange for the plot to used with xmin xmax as the two arguments')
-parser.add_argument('--yrange', dest='yaxisrange', default=[9999], nargs='*', type=float, help='set a yrange for the plot to used with ymin ymax as the two arguments')
+parser.add_argument('-r', '--rebin', dest='rebin', default=1, type = int, help='add number to rebin the histograms | type=int')
+parser.add_argument('--exact', dest='exact', default=False, help='if set to True, only histograms with the exact name will be used')
+parser.add_argument('--xrange', dest='xaxisrange', default=[9999], nargs='*', type=float, help='set a xrange for the plot to used with xmin xmax as the two arguments | type=float')
+parser.add_argument('--yrange', dest='yaxisrange', default=[9999], nargs='*', type=float, help='set a yrange for the plot to used with ymin ymax as the two arguments | type=float')
 parser.add_argument('--legend', dest='legend', nargs='*', help='list of names to be used as legend titles instead of the default filename+histogram name')
 parser.add_argument('--ylog', dest='ylog', help='if given as an option, set y axis to logarithmic. Remember to set the yrange to start above 0!')
-parser.add_argument('--color', dest='color', default=[600, 632, 1, 402, 416, 432, 880, 860, 900, 800, 840], nargs='*', type=int, help='list of colors to be used')
+parser.add_argument('--color', dest='color', default=[600, 632, 1, 402, 416, 432, 880, 860, 900, 800, 840], nargs='*', type=int, help='list of colors to be used | type=int')
+parser.add_argument('--xtitle', dest='xtitle', help='choose the name of the x axis title')
+parser.add_argument('--ytitle', dest='ytitle', help='choose the name of the y axis title')
 
 args = parser.parse_args()
+
+if len(sys.argv) < 2:
+	print parser.print_help()
+	sys.exit(1)
 print ''
 #if ((not args.file_in) or ('root' not in args.file_in)):
 	#print "Please specify a root file as first argument"
 	#quit()
+##-----------------	
+##produce empty root file and filename lists.
 root_file_list = []
 filename_list = []
-
+##-----------------
+##loop through all given files and add them to the list. then loop through the keys for every file..
 for root_file in args.file_in:
 	root_file_list.append(ROOT.TFile(root_file))
 	filename_list.append(root_file[root_file.find('/20')+1:root_file.rfind('.bin')])
@@ -168,10 +195,12 @@ for root_file in args.file_in:
 for x in root_file_list:
 	key_root = x.GetListOfKeys()
 	loopdir(key_root)
-	
-
+##-----------------	
+##general output
 print args.color
-	
+
+
+
 print 'Looking for histograms'
 print '----------------------'
 print 'Name contains ', args.name
@@ -183,14 +212,18 @@ print 'Number of histograms found is: ', len(hist_list)
 print hist_list	
 if (args.ylog and args.yaxisrange[0] is 0):
 	print 'Setting y axis to log, only works if the range was specified to start at y_min > 0'
+##------------------
+##start of the plotting.
 
 if len(hist_list) is not 0:
 	if ('same' in args.draw_option):
+		##------------------
+		##initialize a canvas, a stack histogram and further variables.
 		drawing_option = args.draw_option.replace('same', 'NOSTACK') #exchange the same with a NOSTACK as I am using THStack
 		c1 = ROOT.TCanvas( args.output_name, 'Test', 1200, 900 )
 		c1.cd()
 		c1.SetFillColor(0)
-		legend = ROOT.TLegend(0.25,0.88,0.85,0.7)
+		legend = ROOT.TLegend(0.45,0.88,0.85,0.7)
 		hist_comp = ROOT.THStack()
 		counter = 1
 		x_title = None
@@ -200,13 +233,18 @@ if len(hist_list) is not 0:
 		y_low = None
 		y_high = None
 		for histogram in hist_list:
-			
+			##------------------
+			##loop through the histograms, get all parameters
 			obj = histogram.ReadObj()
 			print 'Number of entries =', obj.GetEntries()
 			x_axis = obj.GetXaxis()
 			y_axis = obj.GetYaxis()
+			##------------------
+			##rebin the histogram
 			if (args.rebin is not 1):
 					obj.Rebin(args.rebin)
+			##------------------
+			##adjust the xrange
 			if 9999 in args.xaxisrange:
 				if (x_low is None):
 					x_low = obj.FindFirstBinAbove(0)-10
@@ -233,9 +271,13 @@ if len(hist_list) is not 0:
 			#x_axis.SetRangeUser(x_low, x_high)
 			obj.SetLineColor(args.color[counter-1])
 			obj.SetMarkerColor(args.color[counter-1])
-			#obj.Draw(args.draw_option)
+
 			
+			##------------------
+			##draw histograms into the same canvas (equivalent to option same)
 			hist_comp.Add(obj)
+			##------------------
+			##adjust legend and the x and y title name if chosen
 			if (not args.legend):
 				if len(filename_list) > 1:
 					legend.AddEntry(obj, filename_list[counter-1]+'_'+histogram.GetName())
@@ -244,12 +286,21 @@ if len(hist_list) is not 0:
 			else:
 				legend.AddEntry(obj, args.legend[counter-1])
 			counter +=1
-			x_title = x_axis.GetTitle()
-			y_title = y_axis.GetTitle()
+			if (args.xtitle):
+				x_title = args.xtitle
+			else:
+				x_title = x_axis.GetTitle()
+			if (args.ytitle):
+				y_title = args.ytitle
+			else:
+				y_title = y_axis.GetTitle()
+		##------------------
+		##set y axis to log
 		if args.ylog:
 			c1.SetLogy()
 			ROOT.gPad.SetLogy()
-		
+		##------------------
+		##draw histogram + components and save the file
 		hist_comp.Draw(drawing_option)
 		xaxis = hist_comp.GetXaxis()
 		xaxis.SetTitle(x_title)
@@ -276,7 +327,8 @@ if len(hist_list) is not 0:
 		
 		counter = 0
 		for histogram in hist_list:
-			
+			##------------------
+			##loop through the histograms, get all parameters and adjust the xrange
 			#ROOT.gROOT.SetBatch(1)
 			c1 = ROOT.TCanvas( 'test', 'Test', 1200,900 ) #
 			obj = histogram.ReadObj()
@@ -298,12 +350,21 @@ if len(hist_list) is not 0:
 				x_high = args.xaxisrange[1]
 				x_axis.SetRangeUser(x_low, x_high)
 			obj.SetLineColor(4) #Blue
+			##------------------
+			##rebin the histogram
 			if (args.rebin is not 1):
 				obj.Rebin(args.rebin)
+			##------------------
+			##set y axis to log
 			if args.ylog:
 				c1.SetLogy()
 				ROOT.gPad.SetLogy()
-			
+			##------------------
+			##set axis titles if chosen through options.
+			if (args.xtitle):
+				x_axis.SetTitle(args.xtitle)
+			if (args.ytitle):
+				y_axis.SetTitle(args.ytitle)
 			obj.Draw(args.draw_option)
 			#ROOT.gROOT.SetBatch(0)
 			#raw_input('Press Enter to look at the next histogram')

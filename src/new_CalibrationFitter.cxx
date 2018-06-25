@@ -625,16 +625,16 @@ int main ( int argc, char **argv ) {
 	TDirectory *General_folder = rFile->GetDirectory(FolderName.str().c_str()); // get path to subdirectory
 	General_folder->cd(); // move into subdirectory
   
-	TH1F *summary1 = new TH1F("pedestals_dac", "Pedestals distribution; Charge [ADC]; #entries", 9000, 0, 9000);
-	TH1F *summary2 = new TH1F("slope", "Slope distribution; Slope [ADC/fC]; #entries", 200, -100, 100);
-	TH1F *summary3 = new TH1F("slope_residual", "Slope_residual; Slope_residual[ADC/fC]; #entries", 2000, -100, 100);
-	TH1F *summary4 = new TH1F("pedestals_fc", "Pedestals distribution; Charge [fC]; #entries", 1000, -100, 100);
+	TH1F *pedestals = new TH1F("pedestals", "Pedestals distribution; Charge [ADC]; #entries", 9000, 0, 9000);
+	TH1F *slope_hist = new TH1F("slope", "Slope distribution; Slope [ADC/fC]; #entries", 200, -100, 100);
+	TH1F *slope_residual = new TH1F("slope_residual", "Slope_residual; Slope_residual[ADC/fC]; #entries", 2000, -100, 100);
+	TH1F *pedestals_fc = new TH1F("pedestals_fc", "Pedestals distribution; Charge [fC]; #entries", 1000, -100, 100);
 	
-	TH1F *summary11 = new TH1F("pedestalsRMS", "Pedestal RMS; Charge [ADC]; #entries", 200, 0, 20);
-	TH1F *summary12 = new TH1F("slopeRMS", "Slope RMS; Slope [ADC/fC]; #entries", 1000, 0, 20);
-	TH1F *summary13 = new TH1F("slope_residualRMS", "Slope_residualRMS; Slope_residual[ADC/fC]; #entries", 1000, 0, 100);
+	TH1F *pedestalsRMS = new TH1F("pedestalsRMS", "Pedestal RMS; Charge [ADC]; #entries", 200, 0, 20);
+	TH1F *slopeRMS = new TH1F("slopeRMS", "Slope RMS; Slope [ADC/fC]; #entries", 1000, 0, 20);
+	TH1F *slope_residualRMS = new TH1F("slope_residualRMS", "Slope_residualRMS; Slope_residual[ADC/fC]; #entries", 1000, 0, 100);
 	
-	TH1F *summary2_1 = new TH1F("slope_vs_channel", "Slope [ADC/fC]; Channel ID; Slope [ADC/fC]", 1024, -0.5, 1023.5);
+	TH1F *slope_vs_channel = new TH1F("slope_vs_channel", "Slope [ADC/fC]; Channel ID; Slope [ADC/fC]", 1024, -0.5, 1023.5);
 	TH1F *RMSfc_v_channel = new TH1F("RMSfc_vs_channel", "; Channel_ID; RMS [fC]", 1024, -0.5, 1023.5);
 	TH1F *RMSfc_v_channel_connected = new TH1F("RMSfc_vs_channel_connected", "; Channel_ID; RMS [fC]", 1024, -0.5, 1023.5);
 	
@@ -723,7 +723,6 @@ int main ( int argc, char **argv ) {
 		  // gausMin=hist->GetMean(1)-2*hist->GetRMS(1);
 		  // gausMax=hist->GetMean(1)+2*hist->GetRMS(1);
 		  // hist->Fit("gaus","q","",gausMin, gausMax);
-		  hist->Write();
 		  
 		  chanData[kpix][channel][bucket][range]->baseHistMean       = hist->GetMean();
 		  chanData[kpix][channel][bucket][range]->baseHistRMS        = hist->GetRMS();
@@ -734,9 +733,9 @@ int main ( int argc, char **argv ) {
 		    chanData[kpix][channel][bucket][range]->baseFitMeanErr   = hist->GetFunction("gaus")->GetParError(1);
 		    chanData[kpix][channel][bucket][range]->baseFitSigmaErr  = hist->GetFunction("gaus")->GetParError(2);
 		    
-		    summary1->Fill(chanData[kpix][channel][bucket][range]->baseFitMean);
+		    pedestals->Fill(chanData[kpix][channel][bucket][range]->baseFitMean);
 		    channel_file_adc_mean << chanData[kpix][channel][bucket][range]->baseFitMean << " " << channel << " " << bucket << endl;
-		    summary11->Fill(chanData[kpix][channel][bucket][range]->baseFitSigma);
+		    pedestalsRMS->Fill(chanData[kpix][channel][bucket][range]->baseFitSigma);
 		    if ( hist->GetFunction("gaus")->GetNDF() == 0 ) {
 		      chanData[kpix][channel][bucket][range]->baseFitChisquare = 0;
 		    } else {
@@ -806,8 +805,6 @@ int main ( int argc, char **argv ) {
       }
     }
   }
-  summary1->Write();
-  summary11->Write();
   cout << endl;
   
    //////////////////////////////////////////
@@ -948,7 +945,7 @@ int main ( int argc, char **argv ) {
 										tmp << "_b" << dec << bucket;
 										tmp << "_r" << dec << range;
 										grCalib->SetTitle(tmp.str().c_str());
-										grCalib->Write(tmp.str().c_str());
+										//grCalib->Write(tmp.str().c_str());
 				
 										// Create and store residual plot
 										for (x=0; x < grCount; x++) grRes[x] = (grY[x] - grCalib->GetFunction("pol1")->Eval(grX[x]));
@@ -963,7 +960,7 @@ int main ( int argc, char **argv ) {
 										tmp << "_b" << dec << bucket;
 										tmp << "_r" << dec << range;
 										grResid->SetTitle(tmp.str().c_str());
-										grResid->Write(tmp.str().c_str());
+										//grResid->Write(tmp.str().c_str());
 				
 										// Add to xml
 										if ( grCalib->GetFunction("pol1") ) {
@@ -971,12 +968,17 @@ int main ( int argc, char **argv ) {
 											Double_t slope = grCalib->GetFunction("pol1")->GetParameter(1);
 											Double_t offset = offset;
 			
-											double ped_charge = ( chanData[kpix][channel][bucket][range]->baseFitMean ) / slope;
-											double ped_charge_err = (chanData[kpix][channel][bucket][range]->baseHistRMS) / slope ; // simple err
-			
-											summary4->Fill( ped_charge * pow(10,15) );
+											long double ped_charge = ( chanData[kpix][channel][bucket][range]->baseFitMean ) / slope;
+											long double ped_charge_err = (chanData[kpix][channel][bucket][range]->baseHistRMS) / slope ; // simple err
+											
+											//cout << "RMS in ADC " << chanData[kpix][channel][bucket][range]->baseHistRMS << endl;
+											//cout << "Slope " << slope << endl;
+											//cout << "RMS in fc " << ped_charge_err << endl;
+											
+											pedestals_fc->Fill( ped_charge * pow(10,15) );
 											
 											PedestalsRMS_fc0->Fill( ped_charge_err * pow(10,15) );
+											//cout << ped_charge_err * pow(10,15) << endl;
 											if ( kpix2strip_left.at(channel) == 9999 ) PedestalsRMS_fc0_disc->Fill( ped_charge_err * pow(10,15) );
 											else{
 											if (channel < 128) PedestalsRMS_fc0_conn_120 -> Fill(ped_charge_err * pow(10,15));
@@ -990,9 +992,9 @@ int main ( int argc, char **argv ) {
 												channel_file_noise << channel << endl ;
 											}
 								
-											summary2->Fill( slope / pow(10,15) );
+											slope_hist->Fill( slope / pow(10,15) );
 											
-											summary2_1->SetBinContent( channel+1, slope / pow(10,15));
+											slope_vs_channel->SetBinContent( channel+1, slope / pow(10,15));
 											if (abs(ped_charge_err * pow(10,15)) < 20)
 											{
 												RMSfc_v_channel->SetBinContent(channel, ped_charge_err * pow(10,15));
@@ -1005,7 +1007,7 @@ int main ( int argc, char **argv ) {
 											}
 											//summary2_1->Fill( channel, slope / pow(10,15) );
 											
-											summary3->Fill( offset);
+											slope_residual->Fill( offset);
 											
 											//summary12->Fill( grCalib->GetFunction("pol1")->GetParError(1) / pow(10,15) );
 											//summary13->Fill( grCalib->GetFunction("pol1")->GetParError(0));
