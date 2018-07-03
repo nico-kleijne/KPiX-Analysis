@@ -1,12 +1,7 @@
 #!usr/bin/python
 
 import numpy as np
-import matplotlib.pyplot as plt
 import string
-import matplotlib as mpl
-import matplotlib.lines as mlines
-import matplotlib.ticker as mticker
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import ROOT
 import argparse
@@ -16,7 +11,7 @@ import sys
 
 ROOT.gROOT.SetBatch(True)
 
-hist_list= []  #Global list of all chosen histograms
+hist_list= []  #Global list of all chosen histograms (only works because its a list, with single variables they need to be declared as global in the function
 graph_list = []
 
 
@@ -474,8 +469,7 @@ parser.add_argument('--xrange', dest='xaxisrange', default=[9999], nargs='*', ty
 parser.add_argument('--yrange', dest='yaxisrange', default=[9999], nargs='*', type=float, help='set a yrange for the plot to used with ymin ymax as the two arguments | type=float')
 parser.add_argument('--legend', dest='legend', nargs='*', help='list of names to be used as legend titles instead of the default filename+histogram name')
 parser.add_argument('--ylog', dest='ylog', help='if given as an option, set y axis to logarithmic. Remember to set the yrange to start above 0!')
-parser.add_argument('--color', dest='color', default=[60
-, 1, 402, 416, 432, 880, 860, 900, 800, 840], nargs='*', type=int, help='list of colors to be used | type=int')
+parser.add_argument('--color', dest='color', default=[60, 416, 1, 432, 402, 880, 860, 900, 800, 840], nargs='*', type=int, help='list of colors to be used | type=int')
 parser.add_argument('--xtitle', dest='xtitle', help='choose the name of the x axis title')
 parser.add_argument('--ytitle', dest='ytitle', help='choose the name of the y axis title')
 
@@ -488,7 +482,7 @@ print ''
 
 
 
-legend_location = [0.45,0.88,0.45,0.88]
+legend_location = [0.15,0.75,0.3,0.85]
 
 ##-----------------	
 ##produce empty root file and filename lists.
