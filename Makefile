@@ -21,8 +21,8 @@ BIN=$(PWD)/bin
 objects=$(patsubst $(SRC)/%.cxx,$(BIN)/%,$(wildcard $(SRC)/*.cxx))
 
 #default:
-all: dir $(objects)
-ana: dir analysis
+all: dir map $(objects)
+ana: dir map analysis
 
 $(BIN)/%: $(SRC)/%.cxx
 	$(CC) -o $@ $< $(CFLAGS) $(KP_RLIB) $(LFLAGS)
@@ -34,5 +34,7 @@ analysis: $(SRC)/analysis.cxx
 dir:
 	test -d $(BIN) || mkdir $(BIN)
 
+map:
+	python python/stripMapMaker.py data/tracker_to_kpix_left.txt data/tracker_to_kpix_right.txt include/kpix_left_and_right.h
 clean:
 	rm $(BIN)/*
