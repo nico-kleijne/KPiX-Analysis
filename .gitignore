@@ -8,4 +8,7 @@ ChangeLog
 .cproject
 .project
 
-include/kpix_left.h
+include/kpix_left.hplot_script.sh
+threshold_scan_script.sh
+SLAC_plot_script.sh
+channel_list_noise.txt

@@ -79,7 +79,7 @@ for line in mapping_file:
 			dc_channels.append(int(line_split[0]))		
 
 kpix = np.chararray(1024)		#create mapper kpix
-filename_map = './include/disable.txt'		#choose filename
+filename_map = './data/disable.txt'		#choose filename
 
 print 'Dead channels from calibration slope = ', dead_channels_slope
 print 'Dead channels from calibration RMS = ', dead_channels_RMS

@@ -2,6 +2,13 @@
 
 Desciption: analysis code for R&D use on the LYCORIS telescope project.
 
+### Notice:
+--------------
+* in .gitignore: in order to ignore the symlink files, please do
+```
+find . -type l | sed -e s'/^\.\///g' >> .gitignore
+```
+
 ### Prerequisite:
 --------------
 
