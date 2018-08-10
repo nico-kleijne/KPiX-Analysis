@@ -35,6 +35,7 @@
 #include <math.h>
 #include <fstream>
 #include <XmlVariables.h>
+#include <TStyle.h>
 
 #include "kpixmap.h"
 #include "kpix_left_and_right.h"
@@ -684,7 +685,7 @@ int main ( int argc, char **argv ) {
   
   TH2F *slope_map_left = new TH2F("slope_map_left", "Slope vs position of KPiX connection left", 32, -0.5, 31.5, 32, -0.5, 31.5);
   TH2F *slope_map_right = new TH2F("slope_map_right", "Slope vs position of KPiX connection right", 32, -0.5, 31.5, 32, -0.5, 31.5);
-  
+
   TH2F *pedestalRMS_map_left = new TH2F("pedestalRMS_map_left", "Pedestal RMS vs position of KPiX connection left", 32, -0.5, 31.5, 32, -0.5, 31.5);
   TH2F *pedestalRMS_map_right = new TH2F("pedestalRMS_map_right", "Pedestal RMS vs position of KPiX connection right", 32, -0.5, 31.5, 32, -0.5, 31.5);
   
@@ -1035,28 +1036,34 @@ int main ( int argc, char **argv ) {
 		      if (kpix==26) {
 				  slope_hist_k26->Fill(slope/pow(10,15));
 				  slope_vs_channel_26->SetBinContent( channel+1, slope / pow(10,15));
-				  slope_map_left->SetBinContent(31-(channel/32), channel%32, slope / pow(10,15));
+				  slope_map_left->SetBinContent(32-(channel/32), channel%32+1, slope / pow(10,15));
+				  slope_map_left->SetMaximum(9);
+				  slope_map_left->SetMinimum(-2);
 				  slope_map_left->SetOption("COLZ2");
+				  if (abs(ped_charge_err * pow(10,15)) > 4) pedestalRMS_map_left->SetBinContent(32-(channel/32), channel%32+1, 2);
+				  else if (abs(ped_charge_err * pow(10,15)) < 0.05) pedestalRMS_map_left->SetBinContent(32-(channel/32), channel%32+1, 0);
+				  else pedestalRMS_map_left->SetBinContent(32-(channel/32), channel%32+1, 1);
+				  pedestalRMS_map_left->SetOption("COLZ2");
+				  gStyle->SetPalette(55);
 			  }
 		      if (kpix==28) {
 				  slope_hist_k28->Fill(slope/pow(10,15));
 				  slope_vs_channel_28->SetBinContent( channel+1, slope / pow(10,15));
-				  slope_map_right->SetBinContent(31-(channel/32), channel%32, slope / pow(10,15));
+				  slope_map_right->SetBinContent(32-(channel/32), channel%32+1, slope / pow(10,15));
+				  slope_map_right->SetMaximum(9);
+				  slope_map_right->SetMinimum(-2);
 				  slope_map_right->SetOption("COLZ2");
+				  if (abs(ped_charge_err * pow(10,15)) > 4) pedestalRMS_map_right->SetBinContent(32-(channel/32), channel%32+1, 2);
+				  else if (abs(ped_charge_err * pow(10,15)) < 0.05) pedestalRMS_map_right->SetBinContent(32-(channel/32), channel%32+1, 0);
+				  else pedestalRMS_map_right->SetBinContent(32-(channel/32), channel%32+1, 1);
+				  pedestalRMS_map_right->SetOption("COLZ2");
+				  gStyle->SetPalette(55);
 		      } 
 		      
 		      if (abs(ped_charge_err * pow(10,15)) < 20) {
 			RMSfc_v_channel->SetBinContent(channel+1, ped_charge_err * pow(10,15));
-			if (kpix==26){
-				RMSfc_v_channel_26->SetBinContent(channel+1, ped_charge_err * pow(10,15));
-				pedestalRMS_map_left->SetBinContent(31-(channel/32), channel%32, ped_charge_err * pow(10,15));
-				pedestalRMS_map_left->SetOption("COLZ2");
-			}
-			if (kpix==28){
-				RMSfc_v_channel_28->SetBinContent(channel+1, ped_charge_err * pow(10,15));
-				pedestalRMS_map_right->SetBinContent(31-(channel/32), channel%32, ped_charge_err * pow(10,15));
-				pedestalRMS_map_right->SetOption("COLZ2");
-			}
+			if (kpix==26) RMSfc_v_channel_26->SetBinContent(channel+1, ped_charge_err * pow(10,15));
+			if (kpix==28) RMSfc_v_channel_28->SetBinContent(channel+1, ped_charge_err * pow(10,15));
 			
 			if (kpix2strip_left.at(channel) != 9999) RMSfc_v_channel_connected->SetBinContent(channel+1, ped_charge_err * pow(10,15));
 			RMSfc_v_strip_left->SetBinContent(kpix2strip_left.at(channel)+1, ped_charge_err * pow(10,15));
